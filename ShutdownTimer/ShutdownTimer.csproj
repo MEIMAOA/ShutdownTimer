@@ -1,0 +1,171 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+
+		<!-- ★ 显式指定主程序名，避免和 Updater 撞名 -->
+		<AssemblyName>ShutdownTimer</AssemblyName>
+		<RootNamespace>ShutdownTimer</RootNamespace>
+
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Platforms>x64</Platforms>
+		<PlatformTarget>x64</PlatformTarget>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+
+		<!-- ★ WinUI 3 项目必须 -->
+		<UseWinUI>true</UseWinUI>
+		<UseWPF>false</UseWPF>
+		<UseWindowsForms>false</UseWindowsForms>
+
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<EnableMsixTooling>true</EnableMsixTooling>
+
+		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+
+		<PublishTrimmed>false</PublishTrimmed>
+		<PublishReadyToRun>false</PublishReadyToRun>
+
+		<WindowsPackageType>None</WindowsPackageType>
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+		<SelfContained>true</SelfContained>
+		<AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+
+		<Version>2.0.0.4</Version>
+
+		<!-- 教育分支版开关（构建时传 -p:EducationBuild=true） -->
+		<EducationBuild Condition="'$(EducationBuild)' == ''">false</EducationBuild>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(EducationBuild)' == 'true'">
+		<DefineConstants>$(DefineConstants);EDUCATION</DefineConstants>
+		<Version>2.1.0.1</Version>
+	</PropertyGroup>
+
+	<!-- ============================================================
+       XAML 页面注册
+       ============================================================ -->
+	<ItemGroup>
+		<!-- Pages -->
+		<Page Update="Pages\GeneralPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\SettingsPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\AboutPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\StartupPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\AppsPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\SystemStatusPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\CleanupPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\NetworkPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\ToolsPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\SecurityPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\MonitoringPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\AutomationPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\AppearancePage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Pages\UpdatePage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+
+		<!-- 教育分支版专属页面（编译始终包含，运行时按 BuildInfo.IsEducation 隐藏入口） -->
+		<Page Update="Pages\EducationPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+
+		<!-- Views（浮层） -->
+		<Page Update="Views\TutorialOverlay.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\OnboardingOverlay.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\TermsOverlay.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<!-- ============================================================
+       Assets 随生成复制到输出目录
+       ============================================================ -->
+	<ItemGroup>
+		<Content Include="Assets\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<!-- ============================================================
+       NuGet 包
+       ============================================================ -->
+	<ItemGroup>
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+		<PackageReference Include="System.Management" Version="8.0.0" />
+	</ItemGroup>
+
+	<!-- ============================================================
+       ★ 编译后：把整个 Updater 目录复制到输出目录的 Updater\ 子目录
+       源：..\Updater\bin\x64\Release\net8.0-windows10.0.19041.0\win-x64\
+       目标：$(OutDir)Updater\
+       ============================================================ -->
+	<Target Name="CopyUpdaterToOutput" AfterTargets="Build">
+		<PropertyGroup>
+			<UpdaterSrcDir>$(MSBuildThisFileDirectory)..\Updater\bin\$(Platform)\$(Configuration)\net8.0-windows10.0.19041.0\win-x64\</UpdaterSrcDir>
+			<UpdaterDstDir>$(OutDir)Updater\</UpdaterDstDir>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<UpdaterFiles Include="$(UpdaterSrcDir)**\*.*" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(UpdaterFiles)"
+			  DestinationFiles="@(UpdaterFiles->'$(UpdaterDstDir)%(RecursiveDir)%(Filename)%(Extension)')"
+			  Condition="Exists('$(UpdaterSrcDir)ShutdownTimer.Updater.exe')"
+			  SkipUnchangedFiles="true" />
+	</Target>
+
+	<!-- ============================================================
+       ★ 发布时：把整个 Updater 目录复制到 publish\Updater\
+       ============================================================ -->
+	<Target Name="CopyUpdaterToPublish" AfterTargets="Publish">
+		<PropertyGroup>
+			<UpdaterSrcDir>$(MSBuildThisFileDirectory)..\Updater\bin\$(Platform)\$(Configuration)\net8.0-windows10.0.19041.0\win-x64\</UpdaterSrcDir>
+			<UpdaterDstDir>$(PublishDir)Updater\</UpdaterDstDir>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<UpdaterFiles Include="$(UpdaterSrcDir)**\*.*" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(UpdaterFiles)"
+			  DestinationFiles="@(UpdaterFiles->'$(UpdaterDstDir)%(RecursiveDir)%(Filename)%(Extension)')"
+			  Condition="Exists('$(UpdaterSrcDir)ShutdownTimer.Updater.exe')"
+			  SkipUnchangedFiles="true" />
+	</Target>
+
+</Project>

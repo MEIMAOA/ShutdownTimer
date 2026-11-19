@@ -1,0 +1,90 @@
+<Page
+    x:Class="ShutdownTimer.Pages.NetworkPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Grid Padding="32,24,32,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="网络连接" Style="{ThemeResource TitleTextBlockStyle}" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <TextBlock Text="检查网络状态、诊断连接问题" Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8">
+
+                <TextBlock Text="网络诊断" Style="{ThemeResource BodyStrongTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,0,0,4"/>
+
+                <Border Style="{StaticResource SettingsCardBorderStyle}">
+                    <StackPanel Spacing="12">
+                        <Button Content="开始诊断" Click="Diagnose_Click"/>
+                        <TextBlock x:Name="DiagStatus" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <ItemsControl x:Name="DiagHost">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Host}" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Message}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="网络适配器" Style="{ThemeResource BodyStrongTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,12,0,4"/>
+
+                <ItemsControl x:Name="AdapterHost">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,0,0,6">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding Name}"
+                                               Style="{ThemeResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Description}"
+                                               Style="{ThemeResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Foreground="{ThemeResource TextFillColorPrimaryBrush}" Opacity="0.6" FontSize="11">
+                                        <Run Text="{Binding Status}"/>
+                                        <Run Text=" · "/>
+                                        <Run Text="{Binding Speed}"/>
+                                        <Run Text=" · "/>
+                                        <Run Text="{Binding MacAddress}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="常用工具" Style="{ThemeResource BodyStrongTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,12,0,4"/>
+
+                <Border Style="{StaticResource SettingsCardBorderStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="打开网络设置" Click="OpenNetSettings_Click"/>
+                        <Button Content="打开防火墙" Click="OpenFirewall_Click"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

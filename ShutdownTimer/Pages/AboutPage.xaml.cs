@@ -1,3 +1,24 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using ShutdownTimer.Services;
+using ShutdownTimer.Views;
+
+namespace ShutdownTimer.Pages
+{
+    public sealed partial class AboutPage : Page
+    {
+        private const string GitHubUrl = "https://github.com/MEIMAOA";
+
+        /// <summary>
+        /// Apache License 2.0 全文（硬编码）。
+        /// 使用 C# 11 原始字符串字面量，无需转义。
+        /// </summary>
+        private const string ApacheLicenseText =
+"""
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -199,3 +220,113 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+""";
+
+        public AboutPage()
+        {
+            this.InitializeComponent();
+
+            var ver = Assembly.GetExecutingAssembly().GetName().Version;
+            VersionText.Text = ver != null ? $"v{ver}" : "v1.0.0";
+            ConfigPathText.Text = AppConfig.GetConfigPath();
+        }
+
+        // ==================== GitHub ====================
+
+        private void OpenGitHub_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = GitHubUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        // ==================== 许可证 ====================
+
+        private async void ShowLicense_Click(object sender, RoutedEventArgs e)
+        {
+            var textBlock = new TextBlock
+            {
+                Text = ApacheLicenseText,
+                TextWrapping = TextWrapping.Wrap,
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
+                FontSize = 12,
+                IsTextSelectionEnabled = true,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)
+                    Application.Current.Resources["TextFillColorPrimaryBrush"]
+            };
+
+            var scrollViewer = new ScrollViewer
+            {
+                Content = textBlock,
+                Height = 400,
+                Width = 640,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Apache License 2.0",
+                Content = scrollViewer,
+                CloseButtonText = "关闭",
+                XamlRoot = this.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        // ==================== 用户条款 ====================
+
+        private async void ShowTerms_Click(object sender, RoutedEventArgs e)
+        {
+            var overlay = new TermsOverlay
+            {
+                ShowDeclineButton = false   // 从关于页查看时不需要"不同意"
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "用户使用条款",
+                Content = overlay,
+                CloseButtonText = "关闭",
+                XamlRoot = this.XamlRoot
+            };
+
+            // 让条款对话框尽量大
+            dialog.Resources["ContentDialogMaxWidth"] = 760d;
+            dialog.Resources["ContentDialogMaxHeight"] = 720d;
+
+            // 点"同意"时直接关闭对话框（这里只是查看，不需要写状态）
+            overlay.Accepted += (s, args) => dialog.Hide();
+
+            await dialog.ShowAsync();
+        }
+
+        // ==================== 配置文件位置 ====================
+
+        private void OpenConfigFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? dir = Path.GetDirectoryName(AppConfig.GetConfigPath());
+                if (string.IsNullOrEmpty(dir)) return;
+
+                Directory.CreateDirectory(dir);
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{dir}\"",
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+    }
+}

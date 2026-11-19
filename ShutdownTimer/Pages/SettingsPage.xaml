@@ -1,0 +1,468 @@
+<Page
+    x:Class="ShutdownTimer.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <ScrollViewer Padding="32,24,32,24" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="8">
+
+            <!-- 标题 -->
+            <TextBlock Text="设置"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <TextBlock Text="调整用户信息、窗口外观与系统集成选项"
+                       Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,4,0,16"/>
+
+            <!-- ============================================ -->
+            <!-- 用户信息卡片（16:9） -->
+            <!-- ============================================ -->
+            <Border Background="{ThemeResource SettingsCardBackgroundBrush}"
+                    BorderBrush="{ThemeResource SettingsCardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,0,0,8"
+                    MaxWidth="720">
+                <Grid>
+                    <Viewbox Stretch="Uniform" MaxWidth="720" HorizontalAlignment="Left">
+                        <Grid Width="720" Height="405">
+                            <Grid.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="{ThemeResource SystemAccentColor}" Offset="0"/>
+                                    <GradientStop Color="{ThemeResource SystemAccentColorDark1}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Grid.Background>
+
+                            <Ellipse Width="300" Height="300"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Margin="0,-150,-150,0"
+                                     Opacity="0.18"
+                                     Fill="White"/>
+
+                            <Grid Margin="40,32">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0"
+                                        Width="140" Height="140"
+                                        CornerRadius="70"
+                                        BorderThickness="3"
+                                        BorderBrush="White"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Background="#40FFFFFF">
+                                    <Grid>
+                                        <FontIcon x:Name="SettingsAvatarPlaceholder"
+                                                  Glyph="&#xE77B;"
+                                                  FontSize="64"
+                                                  Foreground="White"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                        <Image x:Name="SettingsAvatar"
+                                               Stretch="UniformToFill"
+                                               Visibility="Collapsed"/>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Grid.Row="1" Spacing="16">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="用户名"
+                                                   FontSize="12"
+                                                   Foreground="White"
+                                                   Opacity="0.75"/>
+                                        <TextBlock x:Name="SettingsUserName"
+                                                   Text="时序用户"
+                                                   FontSize="32"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button x:Name="EditNameButton"
+                                                Content="编辑用户名"
+                                                Click="EditName_Click"
+                                                Background="White"
+                                                Foreground="Black"
+                                                BorderThickness="0"
+                                                CornerRadius="6"
+                                                Height="34"
+                                                Padding="16,0"/>
+                                        <Button x:Name="ChangeAvatarButton"
+                                                Content="更换头像"
+                                                Click="ChangeAvatar_Click"
+                                                Background="#30FFFFFF"
+                                                Foreground="White"
+                                                BorderThickness="0"
+                                                CornerRadius="6"
+                                                Height="34"
+                                                Padding="16,0"/>
+                                    </StackPanel>
+
+                                    <!-- 用户信息锁定提示 -->
+                                    <StackPanel x:Name="UserInfoLockHint"
+                                                Orientation="Horizontal"
+                                                Spacing="6"
+                                                Visibility="Collapsed">
+                                        <FontIcon Glyph="&#xE72E;"
+                                                  FontSize="12"
+                                                  Foreground="White"
+                                                  Opacity="0.9"
+                                                  VerticalAlignment="Center"/>
+                                        <TextBlock Text="此项已被锁定，无法修改"
+                                                   FontSize="12"
+                                                   Foreground="White"
+                                                   Opacity="0.9"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Viewbox>
+                </Grid>
+            </Border>
+
+            <!-- ============================================ -->
+            <!-- 外观 -->
+            <!-- ============================================ -->
+            <TextBlock Text="外观"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,12,0,4"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="窗口透明度"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="值越大越透明（需关闭背景图）"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <Slider Grid.Column="1"
+                            x:Name="AlphaSlider"
+                            Width="200"
+                            Minimum="30" Maximum="255"
+                            StepFrequency="1"
+                            VerticalAlignment="Center"
+                            Margin="16,0,12,0"
+                            ValueChanged="AlphaSlider_ValueChanged"/>
+
+                    <TextBlock Grid.Column="2"
+                               x:Name="AlphaValueText"
+                               MinWidth="48"
+                               TextAlignment="Right"
+                               VerticalAlignment="Center"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="显示背景图片"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="关闭后窗口呈透明效果"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1"
+                                  x:Name="BackgroundSwitch"
+                                  MinWidth="0"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Toggled="BackgroundSwitch_Toggled"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="背景图片"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock x:Name="BackgroundPathText"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="ChooseBackgroundButton"
+                                    Content="选择" Click="ChooseBackground_Click"/>
+                            <Button x:Name="ResetBackgroundButton"
+                                    Content="默认" Click="ResetBackground_Click"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border CornerRadius="4" BorderThickness="1"
+                            BorderBrush="{ThemeResource SettingsCardBorderBrush}"
+                            HorizontalAlignment="Left" Padding="4">
+                        <Image x:Name="PreviewImage" Width="220" Height="120" Stretch="UniformToFill"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- ============================================ -->
+            <!-- 帮助 -->
+            <!-- ============================================ -->
+            <TextBlock Text="帮助"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,12,0,4"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="重看所有教程"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="下次进入每个页面时重新显示使用教程"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" x:Name="ResetTutorialsButton"
+                            Content="重置"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Click="ResetTutorials_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- ============================================ -->
+            <!-- 系统集成 -->
+            <!-- ============================================ -->
+            <TextBlock Text="系统集成"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,12,0,4"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="在系统托盘中显示"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="关闭窗口时继续在后台运行"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1"
+                                  x:Name="TraySwitch"
+                                  MinWidth="0"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Toggled="TraySwitch_Toggled"/>
+                </Grid>
+            </Border>
+
+            <!-- ============================================ -->
+            <!-- ★ 危险选项 -->
+            <!-- ============================================ -->
+            <TextBlock Text="危险选项"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                       Margin="0,20,0,4"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}"
+                    BorderBrush="{ThemeResource SystemFillColorCriticalBrush}">
+                <StackPanel Spacing="12">
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="功能锁定"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="开启后，对应功能的设置将被锁定，用户无法在界面上修改。请谨慎使用。"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Rectangle Height="1"
+                               Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                    <!-- 锁定定时关机 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定定时关机"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="定时关机页的开关和时间选择将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockShutdownSwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockShutdown_Toggled"/>
+                    </Grid>
+
+                    <!-- 锁定托盘显示 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定托盘显示"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="托盘开关将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockTrayIconSwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockTrayIcon_Toggled"/>
+                    </Grid>
+
+                    <!-- 锁定用户名和头像 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定用户名和头像"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="用户卡片上的编辑按钮将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockUserInfoSwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockUserInfo_Toggled"/>
+                    </Grid>
+
+                    <!-- 锁定窗口透明度 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定窗口透明度"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="透明度滑块将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockWindowOpacitySwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockWindowOpacity_Toggled"/>
+                    </Grid>
+
+                    <!-- 锁定背景图 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定背景图"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="背景图开关和选择按钮将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockBackgroundImageSwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockBackgroundImage_Toggled"/>
+                    </Grid>
+
+                    <!-- 锁定教程重置 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="锁定教程重置"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="重置教程按钮将被禁用"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      x:Name="LockTutorialsSwitch"
+                                      MinWidth="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Toggled="LockTutorials_Toggled"/>
+                    </Grid>
+
+                    <Rectangle Height="1"
+                               Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                    <TextBlock Text="提示：锁定仅在本程序界面内有效，用户仍可通过手动编辑 config.json 修改设置。"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap"/>
+
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

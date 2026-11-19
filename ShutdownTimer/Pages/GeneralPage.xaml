@@ -1,0 +1,127 @@
+<Page
+    x:Class="ShutdownTimer.Pages.GeneralPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <ScrollViewer Padding="32,24,32,24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+
+            <TextBlock Text="时序"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="所有更改都会立即保存并生效"
+                       Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,20"/>
+
+            <TextBlock Text="常规"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,8"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="启用时序"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Text="开启后将在每天指定时间自动关闭计算机"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1"
+                                  x:Name="EnableSwitch"
+                                  MinWidth="0"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Toggled="EnableSwitch_Toggled"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Text="关机时间"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="可添加多个时间段，到达任一设定时间都会自动关机"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                x:Name="AddTimeButton"
+                                Content="添加时间"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Click="AddTime_Click"/>
+                    </Grid>
+                    <StackPanel x:Name="TimesPanel" Spacing="4"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="开机自动启动"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Text="登录 Windows 后自动在后台静默运行"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1"
+                                  x:Name="AutoStartSwitch"
+                                  MinWidth="0"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Toggled="AutoStartSwitch_Toggled"/>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="操作"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,20,0,8"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="取消关机"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Text="如果系统正在倒计时关机，可立即取消"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="立即取消"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Click="CancelShutdownButton_Click"/>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
