@@ -34,8 +34,21 @@ namespace ShutdownTimer
         protected override void OnLaunched(
             Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            bool silent = Environment.GetCommandLineArgs()
-                .Any(a => a.Equals("/silent", StringComparison.OrdinalIgnoreCase));
+            var cmdArgs = Environment.GetCommandLineArgs();
+
+            bool silent = cmdArgs.Any(a => a.Equals("/silent", StringComparison.OrdinalIgnoreCase));
+            bool guardian = cmdArgs.Any(a => a.Equals("--guardian", StringComparison.OrdinalIgnoreCase));
+
+            // 守护进程模式（教育分支版）：只运行看门狗，不显示主窗口
+            if (guardian)
+            {
+                ProcessGuard.StartAsGuardian();
+                GuardianRunner.Run();
+                return;
+            }
+
+            // 主进程：教育分支版启动进程守护
+            ProcessGuard.StartAsMain();
 
             if (silent)
             {

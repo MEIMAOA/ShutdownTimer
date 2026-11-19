@@ -39,6 +39,7 @@ namespace ShutdownTimer.Services
                 {
                     try { ShutdownScheduler.Tick(); } catch { }
                     try { SoftwareBlocker.Tick(); } catch { }
+                    try { ProcessGuard.MainTick(); } catch { }
                 };
                 _timer.Start();
             }

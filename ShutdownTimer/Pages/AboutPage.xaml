@@ -169,6 +169,35 @@
                 </Grid>
             </Border>
 
+            <!-- ==================== 退出 ==================== -->
+            <TextBlock Text="退出"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,12,0,4"/>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="退出软件"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="完全退出时序（关闭定时任务与软件管控）"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="退出软件"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Click="ExitApp_Click"/>
+                </Grid>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

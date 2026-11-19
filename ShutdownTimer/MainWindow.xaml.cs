@@ -241,6 +241,7 @@ namespace ShutdownTimer
                 {
                     try { ShutdownScheduler.Tick(); } catch { }
                     try { SoftwareBlocker.Tick(); } catch { }
+                    try { ProcessGuard.MainTick(); } catch { }
                 };
                 _scheduleTimer.Start();
             }
@@ -582,7 +583,7 @@ namespace ShutdownTimer
             _trayIcon.ExitRequested += () => DispatcherQueue.TryEnqueue(() =>
             {
                 _trayIcon?.Dispose();
-                Application.Current.Exit();
+                ProcessGuard.ExitGracefully();
             });
         }
 
@@ -599,6 +600,7 @@ namespace ShutdownTimer
             else
             {
                 _trayIcon?.Dispose();
+                ProcessGuard.ExitGracefully();
             }
         }
 

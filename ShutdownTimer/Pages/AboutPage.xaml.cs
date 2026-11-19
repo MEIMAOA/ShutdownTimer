@@ -328,5 +328,12 @@ namespace ShutdownTimer.Pages
             }
             catch { }
         }
+
+        // ==================== 退出软件 ====================
+
+        private void ExitApp_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessGuard.ExitGracefully();
+        }
     }
 }
