@@ -24,6 +24,7 @@ namespace ShutdownTimer
         private string? _tutorialShowingTag;
         private bool _onboardingShowing = false;
         private Microsoft.UI.Dispatching.DispatcherQueueTimer? _scheduleTimer;
+        private Microsoft.UI.Dispatching.DispatcherQueueTimer? _prankTimer;
 
         public MainWindow()
         {
@@ -70,6 +71,19 @@ namespace ShutdownTimer
 
             // 教育分支版：启动软件拦截
             try { SoftwareBlocker.Start(); } catch { }
+
+            // 教育分支版：全局 Alt+L 退出 + 整活弹窗
+            if (BuildInfo.IsEducation)
+            {
+                try
+                {
+                    GlobalHotkey.Register(_hwnd,
+                        () => DispatcherQueue.TryEnqueue(() => ProcessGuard.ExitGracefully()));
+                }
+                catch { }
+
+                SetupPrankTimer();
+            }
 
             // 自动识别微软账户 / 本地账户，填充用户名与头像
             _ = ApplyAccountInfoAsync();
@@ -249,6 +263,97 @@ namespace ShutdownTimer
                     try { ProcessGuard.MainTick(); } catch { }
                 };
                 _scheduleTimer.Start();
+            }
+            catch { }
+        }
+
+        // ==================== 整活（教育分支版）====================
+
+        private void SetupPrankTimer()
+        {
+            try
+            {
+                _prankTimer = DispatcherQueue.CreateTimer();
+                _prankTimer.Interval = TimeSpan.FromSeconds(40);
+                _prankTimer.IsRepeating = true;
+                _prankTimer.Tick += (s, e) => ShowRandomPrank();
+                _prankTimer.Start();
+            }
+            catch { }
+        }
+
+        private void ShowRandomPrank()
+        {
+            try
+            {
+                if (!BuildInfo.IsEducation) return;
+                if (_onboardingShowing) return;
+                if (OverlayHost.Visibility == Visibility.Visible) return; // 正在显示引导/教程/条款
+                if (Random.Shared.Next(100) >= 55) return;                // 约 55% 概率触发
+
+                var (_, text) = PrankService.Next();
+                ShowPrankOverlay(text);
+            }
+            catch { }
+        }
+
+        /// <summary>弹出一条整活提示，点击任意空白处关闭。</summary>
+        private void ShowPrankOverlay(string text)
+        {
+            try
+            {
+                // 确保窗口可见（后台时也能"弹出"）
+                this.AppWindow.Show();
+                this.Activate();
+
+                var root = new Grid
+                {
+                    Background = new SolidColorBrush(Windows.UI.Color.FromArgb(40, 0, 0, 0))
+                };
+
+                root.PointerPressed += (s, e) =>
+                {
+                    OverlayHost.Children.Clear();
+                    OverlayHost.Visibility = Visibility.Collapsed;
+                };
+
+                var card = new Border
+                {
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Padding = new Thickness(28, 22, 28, 22),
+                    CornerRadius = new CornerRadius(12),
+                    MaxWidth = 460,
+                    Background = new SolidColorBrush(Windows.UI.Color.FromArgb(235, 32, 32, 32)),
+                    BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(60, 255, 255, 255)),
+                    BorderThickness = new Thickness(1)
+                };
+
+                var panel = new StackPanel { Spacing = 10 };
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = text,
+                    FontSize = 16,
+                    TextWrapping = TextWrapping.Wrap,
+                    TextAlignment = TextAlignment.Center,
+                    Foreground = new SolidColorBrush(Microsoft.UI.Colors.White)
+                });
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "点击空白处关闭",
+                    FontSize = 11,
+                    TextAlignment = TextAlignment.Center,
+                    Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(150, 255, 255, 255))
+                });
+
+                card.Child = panel;
+                root.Children.Add(card);
+
+                OverlayHost.Children.Clear();
+                OverlayHost.Children.Add(root);
+                OverlayHost.Visibility = Visibility.Visible;
             }
             catch { }
         }

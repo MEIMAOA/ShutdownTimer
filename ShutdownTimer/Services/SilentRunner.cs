@@ -26,6 +26,18 @@ namespace ShutdownTimer.Services
 
             // 教育分支版：启动软件拦截
             try { SoftwareBlocker.Start(); } catch { }
+
+            // 教育分支版：全局 Alt+L 退出（静默模式也要可用）
+            if (BuildInfo.IsEducation)
+            {
+                try
+                {
+                    IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_holderWindow);
+                    GlobalHotkey.Register(hwnd,
+                        () => _holderWindow?.DispatcherQueue.TryEnqueue(() => ProcessGuard.ExitGracefully()));
+                }
+                catch { }
+            }
         }
 
         private static void StartScheduleTimer(DispatcherQueue dispatcher)
