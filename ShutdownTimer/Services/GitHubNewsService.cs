@@ -22,6 +22,42 @@ namespace ShutdownTimer.Services
         public string? ReleaseNotes { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? ReleasedAt { get; set; }
+
+        // ===== 供 XAML 绑定的展示用属性 =====
+
+        public string StatsText
+        {
+            get
+            {
+                string s = $"★ {Stars}";
+                if (Forks > 0) s += $"   ⑂ {Forks}";
+                if (!string.IsNullOrWhiteSpace(Language)) s += $"   · {Language}";
+                if (UpdatedAt.HasValue) s += $"   · 更新于 {UpdatedAt:yyyy-MM-dd}";
+                return s;
+            }
+        }
+
+        public string ReleaseText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(LatestReleaseTag)) return "";
+                string s = $"最新版本：{LatestReleaseTag}";
+                if (!string.IsNullOrWhiteSpace(LatestReleaseName)) s += $"（{LatestReleaseName}）";
+                if (ReleasedAt.HasValue) s += $" · {ReleasedAt:yyyy-MM-dd}";
+                return s;
+            }
+        }
+
+        public string NotesText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ReleaseNotes)) return "";
+                string n = ReleaseNotes!;
+                return n.Length > 400 ? n.Substring(0, 400) + "…" : n;
+            }
+        }
     }
 
     /// <summary>主页资讯源：从指定的 GitHub 仓库获取信息。</summary>

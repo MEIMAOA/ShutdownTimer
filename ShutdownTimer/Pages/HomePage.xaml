@@ -36,7 +36,41 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        TextWrapping="Wrap"/>
 
-            <StackPanel x:Name="ContentPanel" Spacing="8" Margin="0,4,0,0"/>
+            <ItemsControl x:Name="RepoList" Margin="0,4,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,0,0,8">
+                            <StackPanel Spacing="6">
+
+                                <HyperlinkButton Content="{Binding FullName}"
+                                                 Tag="{Binding}"
+                                                 Click="RepoLink_Click"
+                                                 Padding="0"
+                                                 HorizontalAlignment="Left"/>
+
+                                <TextBlock Text="{Binding Description}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+
+                                <TextBlock Text="{Binding StatsText}"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+                                <TextBlock Text="{Binding ReleaseText}"
+                                           TextWrapping="Wrap"
+                                           FontWeight="SemiBold"
+                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+
+                                <TextBlock Text="{Binding NotesText}"
+                                           TextWrapping="Wrap"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
         </StackPanel>
     </ScrollViewer>
