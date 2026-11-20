@@ -34,7 +34,8 @@
                         <TextBlock Grid.Column="0" Text="应用名称"
                                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Grid.Column="1" Text="时序"
+                        <TextBlock Grid.Column="1" x:Name="AppNameText"
+                                   Text="时序"
                                    HorizontalAlignment="Right"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </Grid>

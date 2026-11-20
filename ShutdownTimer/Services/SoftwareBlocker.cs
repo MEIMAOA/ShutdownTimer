@@ -7,78 +7,124 @@ using System.Management;
 namespace ShutdownTimer.Services
 {
     /// <summary>
-    /// 教育分支版专属：禁止打开特定软件。
-    /// - 通过 WMI Win32_ProcessStartTrace 监听进程启动，进程一启动即被结束（即时拦截）；
-    /// - 同时保留周期扫描兜底（含完整路径匹配）。
-    /// 仅教育分支版启用（正式版中直接跳过）。
+    /// 教育分支版专属：软件管控。
+    /// - 通过 WMI Win32_ProcessStartTrace 监听进程启动，进程一启动即被检查（即时拦截）；
+    /// - 周期扫描兜底（含完整路径匹配）。
+    /// 支持：完全禁止、每日限时、允许使用的时间段。
     /// </summary>
     public static class SoftwareBlocker
     {
-        private static readonly object _lock = new();
+        private const int TickSeconds = 10;
+
         private static ManagementEventWatcher? _watcher;
-        private static HashSet<string> _blockedNames = new(StringComparer.OrdinalIgnoreCase);
-        private static HashSet<string> _blockedPaths = new(StringComparer.OrdinalIgnoreCase);
+        private static DateTime _lastTick = DateTime.Now;
 
         /// <summary>启动拦截（应用启动时调用一次）。</summary>
         public static void Start()
         {
             if (!BuildInfo.IsEducation) return;
 
-            ReloadBlockList();
             StartWatcher();
         }
 
-        /// <summary>周期调用（兜底扫描，建议每 10 秒一次）。</summary>
+        /// <summary>周期调用（兜底扫描 + 限时/时间段 + 使用时长累加）。</summary>
         public static void Tick()
         {
             if (!BuildInfo.IsEducation) return;
 
-            ReloadBlockList();
-            KillBlockedProcesses();
-        }
-
-        // ==================== 黑名单 ====================
-
-        private static void ReloadBlockList()
-        {
             try
             {
+                var now = DateTime.Now;
+                int deltaSeconds = (int)(now - _lastTick).TotalSeconds;
+                _lastTick = now;
+                if (deltaSeconds <= 0 || deltaSeconds > 120) deltaSeconds = TickSeconds;
+
                 var c = AppConfig.Load();
-                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (c.ManagedApps == null || c.ManagedApps.Count == 0) return;
 
-                if (c.BlockedApps != null)
+                foreach (var p in Process.GetProcesses())
                 {
-                    foreach (var raw in c.BlockedApps)
+                    try
                     {
-                        string s = (raw ?? "").Trim();
-                        if (s.Length == 0) continue;
+                        ManagedApp? rule = FindRule(p, c.ManagedApps);
+                        if (rule == null) continue;
 
-                        // 含路径分隔符 → 按完整路径匹配；否则按进程名匹配
-                        if (s.IndexOf('\\') >= 0 || s.IndexOf('/') >= 0)
+                        if (IsAllowed(rule, p.ProcessName, now))
                         {
-                            paths.Add(Path.GetFullPath(s));
+                            UsageTracker.AddSeconds(p.ProcessName, deltaSeconds);
                         }
                         else
                         {
-                            names.Add(StripExe(s));
+                            try { p.Kill(); } catch { }
                         }
                     }
-                }
-
-                lock (_lock)
-                {
-                    _blockedNames = names;
-                    _blockedPaths = paths;
+                    catch { }
+                    finally { p.Dispose(); }
                 }
             }
             catch { }
         }
 
-        private static string StripExe(string s)
-            => s.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                ? s.Substring(0, s.Length - 4)
-                : s;
+        // ==================== 规则匹配 ====================
+
+        private static ManagedApp? FindRule(Process p, List<ManagedApp> rules)
+        {
+            foreach (var rule in rules)
+            {
+                string rp = (rule.Process ?? "").Trim();
+                if (rp.Length == 0) continue;
+
+                bool match;
+                if (rp.IndexOf('\\') >= 0 || rp.IndexOf('/') >= 0)
+                {
+                    string? fp = null;
+                    try { fp = p.MainModule?.FileName; } catch { }
+                    match = !string.IsNullOrEmpty(fp)
+                        && string.Equals(fp, Path.GetFullPath(rp), StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    match = string.Equals(p.ProcessName, StripExe(rp), StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (match) return rule;
+            }
+            return null;
+        }
+
+        private static bool IsAllowed(ManagedApp rule, string processName, DateTime now)
+        {
+            // 完全禁止
+            if (rule.MaxMinutesPerDay == 0) return false;
+
+            // 时间段：非空且当前不在窗口内 → 不允许
+            if (!string.IsNullOrWhiteSpace(rule.AllowedStart)
+                && !string.IsNullOrWhiteSpace(rule.AllowedEnd))
+            {
+                if (!IsWithinWindow(now, rule.AllowedStart, rule.AllowedEnd))
+                    return false;
+            }
+
+            // 每日限时（>0 表示限时；-1 表示不限时长）
+            if (rule.MaxMinutesPerDay > 0)
+            {
+                int used = UsageTracker.GetSecondsToday(processName);
+                if (used >= rule.MaxMinutesPerDay * 60) return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsWithinWindow(DateTime now, string start, string end)
+        {
+            if (!TryParseTime(start, out var st) || !TryParseTime(end, out var et))
+                return true; // 解析失败则放行
+
+            var t = now.TimeOfDay;
+            if (st <= et)
+                return t >= st && t <= et;
+            return t >= st || t <= et; // 跨天时间段，如 22:00-06:00
+        }
 
         // ==================== WMI 进程启动监听 ====================
 
@@ -101,36 +147,42 @@ namespace ShutdownTimer.Services
             {
                 string? pidStr = e.NewEvent.Properties["ProcessID"]?.Value?.ToString();
                 string? processName = e.NewEvent.Properties["ProcessName"]?.Value?.ToString();
+                if (string.IsNullOrEmpty(processName)) return;
 
                 int pid = int.TryParse(pidStr, out int parsed) ? parsed : -1;
 
-                if (string.IsNullOrEmpty(processName)) return;
+                var c = AppConfig.Load();
+                if (c.ManagedApps == null || c.ManagedApps.Count == 0) return;
 
-                if (IsBlocked(processName))
+                var now = DateTime.Now;
+                foreach (var rule in c.ManagedApps)
                 {
-                    KillProcess(pid, processName);
+                    if (!NameMatches(processName, rule.Process))
+                        continue;
+
+                    if (!IsAllowed(rule, Path.GetFileNameWithoutExtension(processName), now))
+                        KillProcess(pid, processName);
+                    return;
                 }
             }
             catch { }
         }
 
-        private static bool IsBlocked(string processName)
+        private static bool NameMatches(string processName, string ruleProcess)
         {
-            HashSet<string> names, paths;
-            lock (_lock)
+            string rp = (ruleProcess ?? "").Trim();
+            if (rp.Length == 0) return false;
+
+            if (rp.IndexOf('\\') >= 0 || rp.IndexOf('/') >= 0)
             {
-                names = _blockedNames;
-                paths = _blockedPaths;
+                return processName.IndexOf('\\') >= 0
+                    && string.Equals(processName, rp, StringComparison.OrdinalIgnoreCase);
             }
 
-            // ProcessName 可能是完整路径，也可能是纯名称
-            if (processName.IndexOf('\\') >= 0)
-            {
-                return paths.Contains(Path.GetFullPath(processName))
-                    || names.Contains(Path.GetFileNameWithoutExtension(processName));
-            }
-
-            return names.Contains(StripExe(processName));
+            return string.Equals(
+                Path.GetFileNameWithoutExtension(processName),
+                StripExe(rp),
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private static void KillProcess(int pid, string processName)
@@ -145,7 +197,6 @@ namespace ShutdownTimer.Services
             }
             catch { }
 
-            // 兜底：按名字再结束一遍
             try
             {
                 string pure = Path.GetFileNameWithoutExtension(processName);
@@ -158,43 +209,22 @@ namespace ShutdownTimer.Services
             catch { }
         }
 
-        // ==================== 周期兜底扫描 ====================
+        // ==================== 工具 ====================
 
-        private static void KillBlockedProcesses()
+        private static string StripExe(string s)
+            => s.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                ? s.Substring(0, s.Length - 4)
+                : s;
+
+        private static bool TryParseTime(string s, out TimeSpan time)
         {
-            HashSet<string> names, paths;
-            lock (_lock)
-            {
-                names = _blockedNames;
-                paths = _blockedPaths;
-            }
-
-            if (names.Count == 0 && paths.Count == 0) return;
-
-            foreach (var p in Process.GetProcesses())
-            {
-                try
-                {
-                    bool blocked = names.Contains(p.ProcessName);
-
-                    if (!blocked && paths.Count > 0)
-                    {
-                        try
-                        {
-                            string? fp = p.MainModule?.FileName;
-                            if (!string.IsNullOrEmpty(fp)) blocked = paths.Contains(fp);
-                        }
-                        catch { }
-                    }
-
-                    if (blocked)
-                    {
-                        try { p.Kill(); } catch { }
-                    }
-                }
-                catch { }
-                finally { p.Dispose(); }
-            }
+            time = TimeSpan.Zero;
+            var parts = (s ?? "").Trim().Split(':');
+            if (parts.Length != 2) return false;
+            if (!int.TryParse(parts[0], out int h) || !int.TryParse(parts[1], out int m)) return false;
+            if (h < 0 || h > 23 || m < 0 || m > 59) return false;
+            time = new TimeSpan(h, m, 0);
+            return true;
         }
     }
 }

@@ -21,7 +21,8 @@
 
         <!-- 标题栏 -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Height="32" Background="Transparent">
-            <TextBlock Text="时序"
+            <TextBlock x:Name="TitleBarText"
+                       Text="时序"
                        Style="{ThemeResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                        VerticalAlignment="Center"

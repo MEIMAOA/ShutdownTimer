@@ -1,26 +1,23 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
+using System.Management;
 using Microsoft.UI.Xaml;
 
 namespace ShutdownTimer.Services
 {
     /// <summary>
     /// 教育分支版进程守护：防止"禁止打开特定软件"因进程被任务管理器结束而失效。
-    /// 主进程与守护进程互相监视，被结束后由另一方自动拉起；
-    /// 只有通过"退出软件"正常退出才会一起退出（不重启）。
+    /// 主进程与守护进程互相监视（通过 WMI 枚举命令行判断对方是否存活），
+    /// 被结束后由另一方自动拉起；只有"退出软件"正常退出才会一起退出（不重启）。
     /// </summary>
     public static class ProcessGuard
     {
-        private const string MainMutexName = "ShutdownTimer_Main_Mutex";
-        private const string GuardianMutexName = "ShutdownTimer_Guardian_Mutex";
+        private const string ExeName = "ShutdownTimer.exe";
+        private const string GuardianArg = "--guardian";
 
         private static string GracefulFlagPath =>
             Path.Combine(Path.GetTempPath(), "ShutdownTimer_graceful_exit.flag");
-
-        private static Mutex? _mainMutex;
-        private static Mutex? _guardianMutex;
 
         /// <summary>当前进程是否为守护进程。</summary>
         public static bool IsGuardianMode { get; private set; }
@@ -35,7 +32,6 @@ namespace ShutdownTimer.Services
             try
             {
                 ClearGracefulFlag();
-                _mainMutex = new Mutex(false, MainMutexName);
                 EnsureGuardianRunning();
             }
             catch { }
@@ -48,7 +44,7 @@ namespace ShutdownTimer.Services
 
             try
             {
-                if (!IsMutexPresent(GuardianMutexName))
+                if (!IsGuardianRunning())
                     LaunchGuardian();
             }
             catch { }
@@ -60,13 +56,7 @@ namespace ShutdownTimer.Services
         public static void StartAsGuardian()
         {
             if (!BuildInfo.IsEducation) return;
-
             IsGuardianMode = true;
-            try
-            {
-                _guardianMutex = new Mutex(false, GuardianMutexName);
-            }
-            catch { }
         }
 
         /// <summary>守护进程周期调用：主进程被结束后重新拉起它（正常退出则一起退出）。</summary>
@@ -74,7 +64,7 @@ namespace ShutdownTimer.Services
         {
             try
             {
-                if (IsMutexPresent(MainMutexName)) return;
+                if (IsMainRunning()) return;
 
                 if (IsGracefulFlagSet())
                 {
@@ -104,18 +94,18 @@ namespace ShutdownTimer.Services
 
         private static void EnsureGuardianRunning()
         {
-            if (!IsMutexPresent(GuardianMutexName))
+            if (!IsGuardianRunning())
                 LaunchGuardian();
         }
 
         private static void LaunchGuardian()
         {
-            try { LaunchShutdownTimer("--guardian"); } catch { }
+            try { LaunchShutdownTimer(GuardianArg); } catch { }
         }
 
         private static void LaunchShutdownTimer(string args)
         {
-            string exe = Path.Combine(AppContext.BaseDirectory, "ShutdownTimer.exe");
+            string exe = Path.Combine(AppContext.BaseDirectory, ExeName);
             Process.Start(new ProcessStartInfo
             {
                 FileName = exe,
@@ -126,12 +116,44 @@ namespace ShutdownTimer.Services
             });
         }
 
-        /// <summary>通过命名互斥体的存在与否判断对应进程是否存活。</summary>
-        private static bool IsMutexPresent(string name)
+        /// <summary>是否存在一个非守护进程的 ShutdownTimer.exe（即主进程）。</summary>
+        private static bool IsMainRunning()
         {
-            bool createdNew;
-            using var m = new Mutex(false, name, out createdNew);
-            return !createdNew;
+            foreach (string cmd in EnumerateCommandLines())
+            {
+                if (cmd.IndexOf(GuardianArg, StringComparison.OrdinalIgnoreCase) < 0)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>是否存在守护进程（命令行含 --guardian）。</summary>
+        private static bool IsGuardianRunning()
+        {
+            foreach (string cmd in EnumerateCommandLines())
+            {
+                if (cmd.IndexOf(GuardianArg, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>枚举所有 ShutdownTimer.exe 的命令行。</summary>
+        private static System.Collections.Generic.List<string> EnumerateCommandLines()
+        {
+            var result = new System.Collections.Generic.List<string>();
+            try
+            {
+                using var searcher = new ManagementObjectSearcher(
+                    $"SELECT CommandLine FROM Win32_Process WHERE Name = '{ExeName}'");
+                foreach (ManagementObject mo in searcher.Get())
+                {
+                    string cmd = mo["CommandLine"]?.ToString() ?? "";
+                    if (cmd.Length > 0) result.Add(cmd);
+                }
+            }
+            catch { }
+            return result;
         }
 
         private static void SetGracefulFlag()

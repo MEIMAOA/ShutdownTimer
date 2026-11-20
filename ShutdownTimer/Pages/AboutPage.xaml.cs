@@ -228,6 +228,7 @@ namespace ShutdownTimer.Pages
 
             var ver = Assembly.GetExecutingAssembly().GetName().Version;
             VersionText.Text = ver != null ? $"v{ver}" : "v1.0.0";
+            AppNameText.Text = BuildInfo.AppName;
             ConfigPathText.Text = AppConfig.GetConfigPath();
         }
 

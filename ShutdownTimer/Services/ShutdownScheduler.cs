@@ -23,12 +23,18 @@ namespace ShutdownTimer.Services
                 var now = DateTime.Now;
                 string hhmm = $"{now.Hour:D2}:{now.Minute:D2}";
 
-                // 关机（支持多个时间段）
-                if (c.Enabled && c.ShutdownTimes != null && c.ShutdownTimes.Contains(hhmm))
+                // 关机（支持多个时间段 + 按星期几）
+                if (c.Enabled && c.ShutdownTimes != null)
                 {
-                    if (TryFire($"shutdown:{now:yyyyMMdd}:{hhmm}"))
-                        ShutdownHelper.ShutdownNow();
-                    return;
+                    foreach (var entry in c.ShutdownTimes)
+                    {
+                        if (MatchesShutdownEntry(entry, now))
+                        {
+                            if (TryFire($"shutdown:{now:yyyyMMdd}:{now.DayOfWeek}:{hhmm}"))
+                                ShutdownHelper.ShutdownNow();
+                            return;
+                        }
+                    }
                 }
 
                 // 重启
@@ -50,6 +56,47 @@ namespace ShutdownTimer.Services
                 }
             }
             catch { }
+        }
+
+        /// <summary>
+        /// 判断某条关机时间是否匹配当前时刻。
+        /// 格式："HH:mm"（每天）或 "D:HH:mm"（D=0..6，周日=0）。
+        /// </summary>
+        private static bool MatchesShutdownEntry(string entry, DateTime now)
+        {
+            if (!TryParseEntry(entry, out int? day, out int hour, out int minute))
+                return false;
+
+            if (day.HasValue && (int)now.DayOfWeek != day.Value)
+                return false;
+
+            return now.Hour == hour && now.Minute == minute;
+        }
+
+        private static bool TryParseEntry(string s, out int? day, out int hour, out int minute)
+        {
+            day = null;
+            hour = 0;
+            minute = 0;
+
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            var parts = s.Trim().Split(':');
+
+            if (parts.Length == 3)
+            {
+                if (!int.TryParse(parts[0], out int d) || d < 0 || d > 6) return false;
+                day = d;
+                return int.TryParse(parts[1], out hour) && int.TryParse(parts[2], out minute)
+                    && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+            }
+
+            if (parts.Length == 2)
+            {
+                return int.TryParse(parts[0], out hour) && int.TryParse(parts[1], out minute)
+                    && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+            }
+
+            return false;
         }
 
         /// <summary>同一分钟内只触发一次，避免重复执行。</summary>

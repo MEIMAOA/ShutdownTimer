@@ -5,6 +5,22 @@ using System.Text.Json;
 
 namespace ShutdownTimer.Services
 {
+    /// <summary>教育分支版：单个软件的管控规则。</summary>
+    public class ManagedApp
+    {
+        /// <summary>进程名或完整路径。</summary>
+        public string Process { get; set; } = "";
+
+        /// <summary>每日允许使用分钟数：0 = 完全禁止；&gt;0 = 限时。</summary>
+        public int MaxMinutesPerDay { get; set; } = 0;
+
+        /// <summary>允许使用的开始时间 "HH:mm"（空 = 不限制）。</summary>
+        public string AllowedStart { get; set; } = "";
+
+        /// <summary>允许使用的结束时间 "HH:mm"（空 = 不限制）。</summary>
+        public string AllowedEnd { get; set; } = "";
+    }
+
     public class AppConfig
     {
         // 定时关机
@@ -55,7 +71,10 @@ namespace ShutdownTimer.Services
         /// <summary>更新渠道：Official（正式版）或 Education（教育分支版）。</summary>
         public string UpdateChannel { get; set; } = BuildInfo.DefaultChannel;
 
-        /// <summary>教育分支版：禁止打开的软件（进程名列表）。</summary>
+        /// <summary>教育分支版：软件管控规则（每个软件的限时/时间段）。</summary>
+        public List<ManagedApp> ManagedApps { get; set; } = new();
+
+        /// <summary>旧版：禁止打开的软件（进程名列表），已迁移到 ManagedApps。</summary>
         public List<string> BlockedApps { get; set; } = new();
 
         // ==================== 危险选项（锁定）====================
@@ -104,7 +123,7 @@ namespace ShutdownTimer.Services
             catch { return new AppConfig(); }
         }
 
-        /// <summary>旧版只有单个关机时间，迁移为时间段列表。</summary>
+        /// <summary>旧版配置迁移。</summary>
         private static void Migrate(AppConfig cfg)
         {
             if (cfg.ShutdownTimes == null)
@@ -113,6 +132,17 @@ namespace ShutdownTimer.Services
                 {
                     $"{Math.Clamp(cfg.ShutdownHour, 0, 23):D2}:{Math.Clamp(cfg.ShutdownMinute, 0, 59):D2}"
                 };
+            }
+
+            // 旧版 BlockedApps（进程名列表）→ ManagedApps（完全禁止）
+            if (cfg.ManagedApps.Count == 0 && cfg.BlockedApps.Count > 0)
+            {
+                foreach (var name in cfg.BlockedApps)
+                {
+                    string n = name?.Trim() ?? "";
+                    if (n.Length > 0)
+                        cfg.ManagedApps.Add(new ManagedApp { Process = n, MaxMinutesPerDay = 0 });
+                }
             }
         }
 

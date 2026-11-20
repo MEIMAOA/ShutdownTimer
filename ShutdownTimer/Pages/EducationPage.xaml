@@ -13,7 +13,7 @@
             <TextBlock Text="软件管控"
                        Style="{ThemeResource TitleTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-            <TextBlock Text="教育分支版专属：禁止打开特定软件"
+            <TextBlock Text="教育分支版专属：禁止打开或限制软件的使用时长与使用时间段"
                        Style="{ThemeResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        Margin="0,4,0,16"/>
@@ -21,42 +21,57 @@
             <Border Style="{StaticResource SettingsCardBorderStyle}">
                 <StackPanel Spacing="12">
 
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="添加被禁止的软件"
-                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    <TextBlock Text="添加管控规则"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+
+                    <TextBox x:Name="ProcessNameBox"
+                             PlaceholderText="进程名或完整路径，如 game 或 C:\path\game.exe"/>
+
+                    <ComboBox x:Name="ModeBox" SelectedIndex="0" HorizontalAlignment="Left" MinWidth="180">
+                        <ComboBoxItem Content="完全禁止" Tag="0"/>
+                        <ComboBoxItem Content="每日限时" Tag="1"/>
+                        <ComboBoxItem Content="不限时长" Tag="-1"/>
+                    </ComboBox>
+
+                    <StackPanel x:Name="MinutesPanel" Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="每日最多使用（分钟）："
+                                   VerticalAlignment="Center"
                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="输入进程名（例如 game、steam），程序会周期结束这些进程"
-                                   Style="{ThemeResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   TextWrapping="Wrap"/>
+                        <NumberBox x:Name="MinutesBox" Width="140"
+                                   Minimum="1" Maximum="1440" Value="60"
+                                   SpinButtonPlacementMode="Compact"/>
                     </StackPanel>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0"
-                                 x:Name="ProcessNameBox"
-                                 PlaceholderText="进程名，如 game（可省略 .exe）"
-                                 VerticalAlignment="Center"/>
-                        <Button Grid.Column="1"
-                                Content="添加"
-                                Margin="8,0,0,0"
-                                VerticalAlignment="Center"
-                                Style="{StaticResource AccentButtonStyle}"
-                                Click="Add_Click"/>
-                    </Grid>
+                    <StackPanel Spacing="8">
+                        <ToggleSwitch x:Name="WindowSwitch"
+                                      Header="限制使用时间段"
+                                      OffContent="不限制"
+                                      OnContent="仅允许在以下时间段使用"
+                                      Toggled="WindowSwitch_Toggled"/>
+                        <StackPanel x:Name="WindowPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                            <TimePicker x:Name="StartTime" ClockIdentifier="24HourClock" MinuteIncrement="5"/>
+                            <TextBlock Text="—" VerticalAlignment="Center"/>
+                            <TimePicker x:Name="EndTime" ClockIdentifier="24HourClock" MinuteIncrement="5"/>
+                        </StackPanel>
+                    </StackPanel>
 
-                    <TextBlock x:Name="EmptyHint"
-                               Text="尚未添加任何软件"
-                               Style="{ThemeResource CaptionTextBlockStyle}"
-                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                               Visibility="Collapsed"/>
+                    <Button Content="添加"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Click="Add_Click"/>
 
-                    <StackPanel x:Name="BlockedListPanel" Spacing="4"/>
                 </StackPanel>
             </Border>
+
+            <TextBlock x:Name="EmptyHint"
+                       Text="尚未添加任何规则"
+                       Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       Visibility="Collapsed"
+                       Margin="0,4,0,0"/>
+
+            <StackPanel x:Name="RulesPanel" Spacing="4"/>
 
         </StackPanel>
     </ScrollViewer>

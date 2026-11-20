@@ -6,9 +6,11 @@ namespace ShutdownTimer.Services
 #if EDUCATION
         public static readonly bool IsEducation = true;
         public const string DefaultChannel = "Education";
+        public const string AppName = "ShutdownTimer-Edu";
 #else
         public static readonly bool IsEducation = false;
         public const string DefaultChannel = "Official";
+        public const string AppName = "时序";
 #endif
     }
 }

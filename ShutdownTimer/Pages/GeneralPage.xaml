@@ -56,7 +56,7 @@
                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                             <TextBlock Text="关机时间"
                                        Style="{ThemeResource BodyStrongTextBlockStyle}"/>
-                            <TextBlock Text="可添加多个时间段，到达任一设定时间都会自动关机"
+                            <TextBlock Text="可添加多个时间段，并指定每天或某一天关机"
                                        Style="{ThemeResource CaptionTextBlockStyle}"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                        TextWrapping="Wrap"/>

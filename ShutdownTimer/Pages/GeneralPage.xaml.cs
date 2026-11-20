@@ -38,7 +38,7 @@ namespace ShutdownTimer.Pages
             }
         }
 
-        /// <summary>根据时间段列表动态生成 TimePicker 行。</summary>
+        /// <summary>根据时间段列表动态生成「星期 + 时间 + 删除」行。</summary>
         private void RenderTimeEntries()
         {
             TimesPanel.Children.Clear();
@@ -46,32 +46,46 @@ namespace ShutdownTimer.Pages
             for (int i = 0; i < _times.Count; i++)
             {
                 int idx = i;
+                var (day, time) = ParseEntry(_times[idx]);
 
-                var row = new Grid { Margin = new Thickness(0, 0, 0, 2) };
+                var row = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var dayBox = CreateDayComboBox(day);
+                Grid.SetColumn(dayBox, 0);
 
                 var picker = new TimePicker
                 {
                     ClockIdentifier = "24HourClock",
                     MinuteIncrement = 1,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
-                    VerticalAlignment = VerticalAlignment.Center
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(8, 0, 0, 0)
                 };
-                picker.Time = ParseTime(_times[idx]);
-                picker.SelectedTimeChanged += (s, e) =>
-                {
-                    if (_isLoading) return;
-                    _times[idx] = FormatTime(picker.Time);
-                    SaveConfig();
-                };
-                Grid.SetColumn(picker, 0);
+                picker.Time = time;
+                Grid.SetColumn(picker, 1);
 
                 var remove = new Button
                 {
                     Content = "删除",
                     Margin = new Thickness(8, 0, 0, 0),
                     VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(remove, 2);
+
+                dayBox.SelectionChanged += (s, e) =>
+                {
+                    if (_isLoading) return;
+                    _times[idx] = FormatEntry(GetDay(dayBox), picker.Time);
+                    SaveConfig();
+                };
+                picker.SelectedTimeChanged += (s, e) =>
+                {
+                    if (_isLoading) return;
+                    _times[idx] = FormatEntry(GetDay(dayBox), picker.Time);
+                    SaveConfig();
                 };
                 remove.Click += (s, e) =>
                 {
@@ -80,8 +94,8 @@ namespace ShutdownTimer.Pages
                     RenderTimeEntries();
                     SaveConfig();
                 };
-                Grid.SetColumn(remove, 1);
 
+                row.Children.Add(dayBox);
                 row.Children.Add(picker);
                 row.Children.Add(remove);
                 TimesPanel.Children.Add(row);
@@ -145,7 +159,6 @@ namespace ShutdownTimer.Pages
             int h = (now.Hour + 1) % 24;
             string candidate = $"{h:D2}:00";
 
-            // 避免与已有时间完全重复
             int guard = 0;
             while (_times.Contains(candidate) && guard < 24)
             {
@@ -166,7 +179,6 @@ namespace ShutdownTimer.Pages
             var check = AppConfig.Load();
             if (check.LockShutdown)
             {
-                // 恢复
                 _isLoading = true;
                 AutoStartSwitch.IsOn = StartupManager.IsEnabled();
                 _isLoading = false;
@@ -193,7 +205,50 @@ namespace ShutdownTimer.Pages
             _isLoading = false;
         }
 
-        // ==================== 时间解析 ====================
+        // ==================== 星期 / 时间解析 ====================
+
+        private static ComboBox CreateDayComboBox(int? day)
+        {
+            var cb = new ComboBox
+            {
+                MinWidth = 96,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            cb.Items.Add(new ComboBoxItem { Content = "每天", Tag = -1 });
+
+            string[] names = { "周日", "周一", "周二", "周三", "周四", "周五", "周六" };
+            for (int d = 0; d <= 6; d++)
+                cb.Items.Add(new ComboBoxItem { Content = names[d], Tag = d });
+
+            cb.SelectedIndex = day.HasValue ? day.Value + 1 : 0;
+            return cb;
+        }
+
+        private static int? GetDay(ComboBox cb)
+        {
+            if (cb.SelectedItem is ComboBoxItem item && item.Tag is int d)
+                return d == -1 ? null : d;
+            return null;
+        }
+
+        /// <summary>解析 "HH:mm"（每天）或 "D:HH:mm"（D=0..6，周日=0）。</summary>
+        private static (int? day, TimeSpan time) ParseEntry(string s)
+        {
+            var parts = s.Split(':');
+            if (parts.Length == 3 && int.TryParse(parts[0], out int d) && d >= 0 && d <= 6)
+            {
+                int h = parts.Length > 1 && int.TryParse(parts[1], out var hh) ? hh : 0;
+                int m = parts.Length > 2 && int.TryParse(parts[2], out var mm) ? mm : 0;
+                return (d, new TimeSpan(Math.Clamp(h, 0, 23), Math.Clamp(m, 0, 59), 0));
+            }
+            return (null, ParseTime(s));
+        }
+
+        private static string FormatEntry(int? day, TimeSpan t)
+        {
+            string tm = FormatTime(t);
+            return day.HasValue ? $"{day.Value}:{tm}" : tm;
+        }
 
         private static TimeSpan ParseTime(string s)
         {

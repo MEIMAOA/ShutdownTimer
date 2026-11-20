@@ -30,6 +30,8 @@ namespace ShutdownTimer
             this.InitializeComponent();
             MainWindowInstance = this;
 
+            TitleBarText.Text = BuildInfo.AppName;
+
             SetupSystemBackdrop();
 
             this.ExtendsContentIntoTitleBar = true;
@@ -577,7 +579,7 @@ namespace ShutdownTimer
 
         private void SetupTrayIcon()
         {
-            _trayIcon = new TrayIcon("时序");
+            _trayIcon = new TrayIcon(BuildInfo.AppName);
             _trayIcon.LeftClick += () => DispatcherQueue.TryEnqueue(RestoreWindow);
             _trayIcon.ShowRequested += () => DispatcherQueue.TryEnqueue(RestoreWindow);
             _trayIcon.ExitRequested += () => DispatcherQueue.TryEnqueue(() =>
