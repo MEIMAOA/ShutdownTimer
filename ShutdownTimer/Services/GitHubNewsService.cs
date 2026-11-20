@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -29,7 +31,7 @@ namespace ShutdownTimer.Services
         public DateTime? UpdatedAt { get; set; }
         public DateTime? ReleasedAt { get; set; }
 
-        // ===== 供 XAML 绑定的展示用属性 =====
+        // ===== 供 XAML 绑定的展示用属性（不参与缓存序列化）=====
 
         private static readonly Dictionary<string, string> LanguageColors =
             new(StringComparer.OrdinalIgnoreCase)
@@ -55,6 +57,7 @@ namespace ShutdownTimer.Services
                 ["XAML"] = "#0060ac"
             };
 
+        [JsonIgnore]
         public BitmapImage? OwnerAvatarImage
         {
             get
@@ -65,6 +68,7 @@ namespace ShutdownTimer.Services
             }
         }
 
+        [JsonIgnore]
         public SolidColorBrush LanguageColorBrush
         {
             get
@@ -74,24 +78,31 @@ namespace ShutdownTimer.Services
             }
         }
 
+        [JsonIgnore]
         public string UpdatedText => UpdatedAt.HasValue ? UpdatedAt.Value.ToString("yyyy-MM-dd") : "";
 
+        [JsonIgnore]
         public string ReleaseBadgeText =>
             string.IsNullOrWhiteSpace(LatestReleaseTag) ? "" : $"最新版本 {LatestReleaseTag}";
 
+        [JsonIgnore]
         public string ReleaseDateText =>
             ReleasedAt.HasValue ? ReleasedAt.Value.ToString("yyyy-MM-dd") : "";
 
+        [JsonIgnore]
         public Visibility ReleaseVisibility =>
             string.IsNullOrWhiteSpace(LatestReleaseTag) ? Visibility.Collapsed : Visibility.Visible;
 
+        [JsonIgnore]
         public Visibility NotesVisibility =>
             string.IsNullOrWhiteSpace(CleanNotes) ? Visibility.Collapsed : Visibility.Visible;
 
+        [JsonIgnore]
         public Visibility DescriptionVisibility =>
             string.IsNullOrWhiteSpace(Description) ? Visibility.Collapsed : Visibility.Visible;
 
         /// <summary>去掉 Markdown 标记 / 隐藏注释后的发布说明摘要。</summary>
+        [JsonIgnore]
         public string CleanNotes
         {
             get
@@ -137,10 +148,21 @@ namespace ShutdownTimer.Services
         }
     }
 
-    /// <summary>主页资讯源：从指定的 GitHub 仓库获取信息。</summary>
+    /// <summary>主页资讯拉取结果（含缓存 / 错误信息）。</summary>
+    public class NewsResult
+    {
+        public List<RepoInfo> Repos { get; set; } = new();
+        public bool FromCache { get; set; }
+        public DateTime? FetchedAt { get; set; }
+        public bool RateLimited { get; set; }
+        public bool Failed { get; set; }
+    }
+
+    /// <summary>主页资讯源：从指定的 GitHub 仓库获取信息（带本地缓存，规避 API 限流）。</summary>
     public static class GitHubNewsService
     {
         private const string Owner = "MEIMAOA";
+        private const int CacheMinutes = 30;
 
         private static readonly string[] RepoNames =
         {
@@ -153,6 +175,10 @@ namespace ShutdownTimer.Services
 
         private static readonly HttpClient _http = CreateHttpClient();
 
+        private static string CachePath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Chronos", "home_cache.json");
+
         private static HttpClient CreateHttpClient()
         {
             var handler = new HttpClientHandler
@@ -160,33 +186,74 @@ namespace ShutdownTimer.Services
                 AllowAutoRedirect = true,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
-            var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+            var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("ShutdownTimer/1.0");
             client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github.v3+json");
             return client;
         }
 
-        public static async Task<List<RepoInfo>> FetchAsync()
+        /// <summary>拉取资讯。forceRefresh=false 时优先使用 30 分钟内的缓存。</summary>
+        public static async Task<NewsResult> FetchAsync(bool forceRefresh = false)
         {
-            var result = new List<RepoInfo>();
+            var result = new NewsResult();
+
+            var cached = LoadCache();
+            if (!forceRefresh && cached != null
+                && (DateTime.Now - cached.Value.fetchedAt).TotalMinutes < CacheMinutes)
+            {
+                result.Repos = cached.Value.repos;
+                result.FromCache = true;
+                result.FetchedAt = cached.Value.fetchedAt;
+                return result;
+            }
+
+            var repos = new List<RepoInfo>();
+            bool rateLimited = false;
 
             foreach (var repo in RepoNames)
             {
                 try
                 {
-                    var info = await FetchRepoAsync(repo);
-                    if (info != null) result.Add(info);
+                    var (info, status) = await FetchRepoAsync(repo);
+                    if (info != null)
+                    {
+                        repos.Add(info);
+                    }
+                    else if (status == HttpStatusCode.Forbidden || status == HttpStatusCode.TooManyRequests)
+                    {
+                        rateLimited = true;
+                    }
                 }
                 catch { }
             }
 
+            if (repos.Count == 0)
+            {
+                // 拉取失败 → 退回到缓存（如果有）
+                if (cached != null)
+                {
+                    result.Repos = cached.Value.repos;
+                    result.FromCache = true;
+                    result.FetchedAt = cached.Value.fetchedAt;
+                    result.RateLimited = rateLimited;
+                    return result;
+                }
+
+                result.Failed = true;
+                result.RateLimited = rateLimited;
+                return result;
+            }
+
+            SaveCache(repos);
+            result.Repos = repos;
+            result.FetchedAt = DateTime.Now;
             return result;
         }
 
-        private static async Task<RepoInfo?> FetchRepoAsync(string repo)
+        private static async Task<(RepoInfo? info, HttpStatusCode status)> FetchRepoAsync(string repo)
         {
-            var repoData = await GetJsonAsync($"https://api.github.com/repos/{Owner}/{repo}");
-            if (repoData == null) return null;
+            var (repoData, status) = await GetJsonAsync($"https://api.github.com/repos/{Owner}/{repo}");
+            if (repoData == null) return (null, status);
 
             var info = new RepoInfo
             {
@@ -202,9 +269,10 @@ namespace ShutdownTimer.Services
             if (DateTime.TryParse(GetString(repoData.Value, "updated_at"), out var upd))
                 info.UpdatedAt = upd;
 
+            // 最新 Release：失败不影响仓库信息（限流时通常会失败）
             try
             {
-                var relData = await GetJsonAsync($"https://api.github.com/repos/{Owner}/{repo}/releases/latest");
+                var (relData, _) = await GetJsonAsync($"https://api.github.com/repos/{Owner}/{repo}/releases/latest");
                 if (relData != null)
                 {
                     info.LatestReleaseTag = GetString(relData.Value, "tag_name");
@@ -216,17 +284,56 @@ namespace ShutdownTimer.Services
             }
             catch { }
 
-            return info;
+            return (info, status);
         }
 
-        private static async Task<JsonElement?> GetJsonAsync(string url)
+        private static async Task<(JsonElement? data, HttpStatusCode status)> GetJsonAsync(string url)
         {
-            using var response = await _http.GetAsync(url);
-            if (!response.IsSuccessStatusCode) return null;
+            try
+            {
+                using var response = await _http.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return (null, response.StatusCode);
 
-            string json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.Clone();
+                string json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                return (doc.RootElement.Clone(), response.StatusCode);
+            }
+            catch
+            {
+                return (null, HttpStatusCode.ServiceUnavailable);
+            }
+        }
+
+        // ==================== 缓存 ====================
+
+        private class CacheData
+        {
+            public DateTime FetchedAt { get; set; }
+            public List<RepoInfo> Repos { get; set; } = new();
+        }
+
+        private static (List<RepoInfo> repos, DateTime fetchedAt)? LoadCache()
+        {
+            try
+            {
+                if (!File.Exists(CachePath)) return null;
+                var data = JsonSerializer.Deserialize<CacheData>(File.ReadAllText(CachePath));
+                if (data == null || data.Repos.Count == 0) return null;
+                return (data.Repos, data.FetchedAt);
+            }
+            catch { return null; }
+        }
+
+        private static void SaveCache(List<RepoInfo> repos)
+        {
+            try
+            {
+                string? dir = Path.GetDirectoryName(CachePath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                var data = new CacheData { FetchedAt = DateTime.Now, Repos = repos };
+                File.WriteAllText(CachePath, JsonSerializer.Serialize(data));
+            }
+            catch { }
         }
 
         private static string? GetString(JsonElement e, string name)

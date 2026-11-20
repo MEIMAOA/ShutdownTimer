@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -13,31 +12,45 @@ namespace ShutdownTimer.Pages
         public HomePage()
         {
             this.InitializeComponent();
-            _ = LoadAsync();
+            _ = LoadAsync(false);
         }
 
-        private async Task LoadAsync()
+        private async Task LoadAsync(bool forceRefresh)
         {
             SummaryText.Text = "正在加载…";
             StatusText.Text = "正在加载…";
 
             try
             {
-                List<RepoInfo> list = await GitHubNewsService.FetchAsync();
+                NewsResult result = await GitHubNewsService.FetchAsync(forceRefresh);
 
-                if (list.Count == 0)
+                if (result.Failed)
                 {
-                    SummaryText.Text = "加载失败";
-                    StatusText.Text = "未能获取到资讯（网络不可用或请求超时）。点击「刷新」重试。";
+                    SummaryText.Text = result.RateLimited ? "接口限流" : "加载失败";
+                    StatusText.Text = result.RateLimited
+                        ? "GitHub 接口触发限流（未登录每小时约 60 次），请稍后再试；点击「刷新」重新拉取。"
+                        : "未能获取到资讯（网络不可用或请求超时）。点击「刷新」重试。";
                     return;
                 }
 
                 int totalStars = 0;
-                foreach (var r in list) totalStars += r.Stars;
+                foreach (var r in result.Repos) totalStars += r.Stars;
 
-                SummaryText.Text = $"共 {list.Count} 个仓库 · 总计 ★ {totalStars} · 更新于 {DateTime.Now:HH:mm}";
-                StatusText.Text = "";
-                RepoList.ItemsSource = list;
+                string whenLabel = result.FromCache ? "缓存于" : "更新于";
+                string timeText = result.FetchedAt.HasValue
+                    ? result.FetchedAt.Value.ToString("HH:mm")
+                    : "";
+                string when = string.IsNullOrEmpty(timeText)
+                    ? ""
+                    : whenLabel + " " + timeText;
+                string cacheNote = result.FromCache ? "（缓存）" : "";
+
+                SummaryText.Text = "共 " + result.Repos.Count + " 个仓库 · 总计 ★ " + totalStars + " · " + when + cacheNote;
+                StatusText.Text = result.FromCache
+                    ? "当前为本地缓存数据（GitHub 接口可能被限流），可点击「刷新」尝试重新拉取。"
+                    : "";
+
+                RepoList.ItemsSource = result.Repos;
             }
             catch (Exception ex)
             {
@@ -49,7 +62,7 @@ namespace ShutdownTimer.Pages
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             RepoList.ItemsSource = null;
-            _ = LoadAsync();
+            _ = LoadAsync(true);
         }
 
         private void RepoLink_Click(object sender, RoutedEventArgs e)
