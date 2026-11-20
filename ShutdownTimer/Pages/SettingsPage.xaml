@@ -289,6 +289,29 @@
                 </Grid>
             </Border>
 
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="默认启动页"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="每次打开程序时默认进入的页面"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1"
+                              x:Name="DefaultPageBox"
+                              MinWidth="160"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              SelectionChanged="DefaultPageBox_SelectionChanged"/>
+                </Grid>
+            </Border>
+
             <!-- ============================================ -->
             <!-- ★ 危险选项 -->
             <!-- ============================================ -->

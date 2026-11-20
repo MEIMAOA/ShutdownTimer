@@ -74,7 +74,10 @@ namespace ShutdownTimer
             // 自动识别微软账户 / 本地账户，填充用户名与头像
             _ = ApplyAccountInfoAsync();
 
-            NavView.SelectedItem = NavView.MenuItems[0];
+            // 启动时默认打开设置的默认页（默认为主页）
+            SelectNavigationItem(string.IsNullOrWhiteSpace(config.DefaultPage)
+                ? "home"
+                : config.DefaultPage);
 
             if (!config.OnboardingCompleted)
             {
@@ -611,6 +614,35 @@ namespace ShutdownTimer
             try { this.AppWindow.Show(); this.Activate(); } catch { }
         }
 
+        /// <summary>根据 tag 选中并导航到指定页；找不到则回退到主页。</summary>
+        private void SelectNavigationItem(string tag)
+        {
+            NavigationViewItem? target = null;
+
+            foreach (var menuItem in NavView.MenuItems)
+            {
+                if (menuItem is NavigationViewItem nvi && nvi.Tag?.ToString() == tag)
+                {
+                    target = nvi;
+                    break;
+                }
+            }
+
+            if (target == null)
+            {
+                foreach (var footerItem in NavView.FooterMenuItems)
+                {
+                    if (footerItem is NavigationViewItem nvi && nvi.Tag?.ToString() == tag)
+                    {
+                        target = nvi;
+                        break;
+                    }
+                }
+            }
+
+            NavView.SelectedItem = target ?? NavView.MenuItems[0];
+        }
+
         // ==================== 导航 + 教程 ====================
 
         private void NavView_SelectionChanged(
@@ -622,6 +654,7 @@ namespace ShutdownTimer
             string tag = item.Tag?.ToString() ?? string.Empty;
             Type? pageType = tag switch
             {
+                "home" => typeof(HomePage),
                 "general" => typeof(GeneralPage),
                 "startup" => typeof(StartupPage),
                 "apps" => typeof(AppsPage),

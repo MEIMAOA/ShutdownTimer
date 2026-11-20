@@ -34,7 +34,7 @@
 		<SelfContained>true</SelfContained>
 		<AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
 
-		<Version>2.0.0.7</Version>
+		<Version>2.0.0.8</Version>
 
 		<!-- 教育分支版开关（构建时传 -p:EducationBuild=true） -->
 		<EducationBuild Condition="'$(EducationBuild)' == ''">false</EducationBuild>
@@ -42,7 +42,7 @@
 
 	<PropertyGroup Condition="'$(EducationBuild)' == 'true'">
 		<DefineConstants>$(DefineConstants);EDUCATION</DefineConstants>
-		<Version>2.1.0.4</Version>
+		<Version>2.1.0.5</Version>
 	</PropertyGroup>
 
 	<!-- ============================================================
@@ -50,6 +50,9 @@
        ============================================================ -->
 	<ItemGroup>
 		<!-- Pages -->
+		<Page Update="Pages\HomePage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
 		<Page Update="Pages\GeneralPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>

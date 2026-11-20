@@ -23,6 +23,9 @@ namespace ShutdownTimer.Services
 
     public class AppConfig
     {
+        /// <summary>启动时默认打开的页面 tag（默认 home 主页）。</summary>
+        public string DefaultPage { get; set; } = "home";
+
         // 定时关机
         public bool Enabled { get; set; } = false;
         public int ShutdownHour { get; set; } = 23;

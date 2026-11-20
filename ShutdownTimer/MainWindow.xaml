@@ -113,6 +113,12 @@
             </NavigationView.PaneHeader>
 
             <NavigationView.MenuItems>
+                <NavigationViewItem Content="主页" Tag="home">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE80F;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
                 <NavigationViewItem Content="定时关机" Tag="general">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE823;"/>

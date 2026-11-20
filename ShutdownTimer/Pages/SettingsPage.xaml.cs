@@ -39,6 +39,8 @@ namespace ShutdownTimer.Pages
 
                 if (TraySwitch != null) TraySwitch.IsOn = c.ShowInTray;
 
+                LoadDefaultPageBox(c.DefaultPage);
+
                 // ★ 危险选项锁定状态
                 if (LockShutdownSwitch != null) LockShutdownSwitch.IsOn = c.LockShutdown;
                 if (LockTrayIconSwitch != null) LockTrayIconSwitch.IsOn = c.LockTrayIcon;
@@ -405,6 +407,58 @@ namespace ShutdownTimer.Pages
                 c.Save();
             }
             catch { }
+        }
+
+        // ==================== 默认启动页 ====================
+
+        private static readonly (string tag, string name)[] PageOptions =
+        {
+            ("home", "主页"),
+            ("general", "定时关机"),
+            ("startup", "启动项"),
+            ("apps", "应用"),
+            ("sysstatus", "系统状态"),
+            ("cleanup", "清理优化"),
+            ("network", "网络连接"),
+            ("monitoring", "系统监控"),
+            ("tools", "常用工具"),
+            ("security", "安全隐私"),
+            ("automation", "自动化"),
+            ("appearance", "外观体验"),
+            ("update", "检查更新"),
+            ("about", "关于")
+        };
+
+        private void LoadDefaultPageBox(string currentTag)
+        {
+            if (DefaultPageBox == null) return;
+
+            DefaultPageBox.Items.Clear();
+            foreach (var (tag, name) in PageOptions)
+            {
+                DefaultPageBox.Items.Add(new ComboBoxItem { Content = name, Tag = tag });
+            }
+
+            DefaultPageBox.SelectedIndex = 0;
+            for (int i = 0; i < PageOptions.Length; i++)
+            {
+                if (PageOptions[i].tag == currentTag)
+                {
+                    DefaultPageBox.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        private void DefaultPageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isLoading) return;
+            if (DefaultPageBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+            {
+                var c = AppConfig.Load();
+                c.DefaultPage = tag;
+                c.Save();
+            }
         }
 
         // ==================== ★ 危险选项（锁定开关）====================
