@@ -18,6 +18,7 @@ namespace ShutdownTimer.Pages
 
         private async Task LoadAsync()
         {
+            SummaryText.Text = "正在加载…";
             StatusText.Text = "正在加载…";
 
             try
@@ -26,15 +27,21 @@ namespace ShutdownTimer.Pages
 
                 if (list.Count == 0)
                 {
+                    SummaryText.Text = "加载失败";
                     StatusText.Text = "未能获取到资讯（网络不可用或请求超时）。点击「刷新」重试。";
                     return;
                 }
 
-                StatusText.Text = $"共 {list.Count} 个仓库的最新资讯：";
+                int totalStars = 0;
+                foreach (var r in list) totalStars += r.Stars;
+
+                SummaryText.Text = $"共 {list.Count} 个仓库 · 总计 ★ {totalStars} · 更新于 {DateTime.Now:HH:mm}";
+                StatusText.Text = "";
                 RepoList.ItemsSource = list;
             }
             catch (Exception ex)
             {
+                SummaryText.Text = "加载失败";
                 StatusText.Text = $"加载失败：{ex.Message}";
             }
         }

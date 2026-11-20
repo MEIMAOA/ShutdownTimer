@@ -8,27 +8,46 @@
     Background="Transparent">
 
     <ScrollViewer Padding="32,24,32,24" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="8">
+        <StackPanel Spacing="10">
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Spacing="2">
-                    <TextBlock Text="主页"
-                               Style="{ThemeResource TitleTextBlockStyle}"
-                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="来自 GitHub 的最新资讯"
-                               Style="{ThemeResource CaptionTextBlockStyle}"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                </StackPanel>
-                <Button Grid.Column="1"
-                        Content="刷新"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Click="Refresh_Click"/>
-            </Grid>
+            <!-- 顶部横幅 -->
+            <Border CornerRadius="12" Margin="0,0,0,4">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="{ThemeResource SystemAccentColor}" Offset="0"/>
+                        <GradientStop Color="{ThemeResource SystemAccentColorDark1}" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Padding="24,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="主页"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                        <TextBlock Text="来自 GitHub 的最新资讯"
+                                   FontSize="13"
+                                   Foreground="#CCFFFFFF"/>
+                        <TextBlock x:Name="SummaryText"
+                                   Text="正在加载…"
+                                   FontSize="12"
+                                   Foreground="#B3FFFFFF"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="刷新"
+                            VerticalAlignment="Top"
+                            Padding="16,6"
+                            Background="#33FFFFFF"
+                            Foreground="White"
+                            BorderThickness="0"
+                            CornerRadius="8"
+                            Click="Refresh_Click"/>
+                </Grid>
+            </Border>
 
             <TextBlock x:Name="StatusText"
                        Text="正在加载…"
@@ -36,37 +55,90 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        TextWrapping="Wrap"/>
 
-            <ItemsControl x:Name="RepoList" Margin="0,4,0,0">
+            <ItemsControl x:Name="RepoList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,0,0,8">
-                            <StackPanel Spacing="6">
+                        <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,0,0,10">
+                            <Grid ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                                <HyperlinkButton Content="{Binding FullName}"
-                                                 Tag="{Binding}"
-                                                 Click="RepoLink_Click"
-                                                 Padding="0"
-                                                 HorizontalAlignment="Left"/>
+                                <!-- 仓库头像 -->
+                                <Border Grid.Column="0"
+                                        Width="44" Height="44"
+                                        CornerRadius="22"
+                                        VerticalAlignment="Top"
+                                        Background="{ThemeResource SettingsCardBorderBrush}">
+                                    <Image Source="{Binding OwnerAvatarImage}" Stretch="UniformToFill"/>
+                                </Border>
 
-                                <TextBlock Text="{Binding Description}"
-                                           TextWrapping="Wrap"
-                                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                <!-- 内容 -->
+                                <StackPanel Grid.Column="1" Spacing="6">
 
-                                <TextBlock Text="{Binding StatsText}"
-                                           Style="{ThemeResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <HyperlinkButton Content="{Binding FullName}"
+                                                     Tag="{Binding}"
+                                                     Click="RepoLink_Click"
+                                                     Padding="0"
+                                                     HorizontalAlignment="Left"
+                                                     FontWeight="SemiBold"
+                                                     FontSize="15"/>
 
-                                <TextBlock Text="{Binding ReleaseText}"
-                                           TextWrapping="Wrap"
-                                           FontWeight="SemiBold"
-                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Description}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Visibility="{Binding DescriptionVisibility}"/>
 
-                                <TextBlock Text="{Binding NotesText}"
-                                           TextWrapping="Wrap"
-                                           Style="{ThemeResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <!-- 统计行 -->
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <FontIcon Glyph="&#xE734;" FontSize="12" Foreground="#FFB900"/>
+                                            <TextBlock Text="{Binding Stars}" FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <FontIcon Glyph="&#xE71B;" FontSize="12"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding Forks}" FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                                                     Fill="{Binding LanguageColorBrush}"/>
+                                            <TextBlock Text="{Binding Language}" FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <FontIcon Glyph="&#xE787;" FontSize="12"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding UpdatedText}" FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
 
-                            </StackPanel>
+                                    <!-- 最新版本 -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8"
+                                                Visibility="{Binding ReleaseVisibility}">
+                                        <FontIcon Glyph="&#xE8EC;" FontSize="12"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ReleaseBadgeText}" FontSize="12" FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding ReleaseDateText}" FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    </StackPanel>
+
+                                    <!-- 发布说明摘要 -->
+                                    <TextBlock Text="{Binding CleanNotes}"
+                                               TextWrapping="Wrap"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                               Visibility="{Binding NotesVisibility}"/>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

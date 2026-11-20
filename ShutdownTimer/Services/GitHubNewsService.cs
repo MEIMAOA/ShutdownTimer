@@ -2,8 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ShutdownTimer.Services
 {
@@ -17,6 +22,7 @@ namespace ShutdownTimer.Services
         public int Forks { get; set; }
         public string Language { get; set; } = "";
         public string HtmlUrl { get; set; } = "";
+        public string OwnerAvatarUrl { get; set; } = "";
         public string? LatestReleaseTag { get; set; }
         public string? LatestReleaseName { get; set; }
         public string? ReleaseNotes { get; set; }
@@ -25,38 +31,109 @@ namespace ShutdownTimer.Services
 
         // ===== 供 XAML 绑定的展示用属性 =====
 
-        public string StatsText
+        private static readonly Dictionary<string, string> LanguageColors =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["C#"] = "#178600",
+                ["C++"] = "#f34b7d",
+                ["C"] = "#555555",
+                ["Python"] = "#3572A5",
+                ["JavaScript"] = "#f1e05a",
+                ["TypeScript"] = "#3178c6",
+                ["Java"] = "#b07219",
+                ["Go"] = "#00ADD8",
+                ["Rust"] = "#dea584",
+                ["Kotlin"] = "#A97BFF",
+                ["Swift"] = "#F05138",
+                ["Ruby"] = "#701516",
+                ["PHP"] = "#4F5D95",
+                ["HTML"] = "#e34c26",
+                ["CSS"] = "#563d7c",
+                ["Shell"] = "#89e051",
+                ["Batchfile"] = "#C1F12E",
+                ["PowerShell"] = "#012456",
+                ["XAML"] = "#0060ac"
+            };
+
+        public BitmapImage? OwnerAvatarImage
         {
             get
             {
-                string s = $"★ {Stars}";
-                if (Forks > 0) s += $"   ⑂ {Forks}";
-                if (!string.IsNullOrWhiteSpace(Language)) s += $"   · {Language}";
-                if (UpdatedAt.HasValue) s += $"   · 更新于 {UpdatedAt:yyyy-MM-dd}";
-                return s;
+                if (string.IsNullOrWhiteSpace(OwnerAvatarUrl)) return null;
+                try { return new BitmapImage(new Uri(OwnerAvatarUrl)); }
+                catch { return null; }
             }
         }
 
-        public string ReleaseText
+        public SolidColorBrush LanguageColorBrush
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(LatestReleaseTag)) return "";
-                string s = $"最新版本：{LatestReleaseTag}";
-                if (!string.IsNullOrWhiteSpace(LatestReleaseName)) s += $"（{LatestReleaseName}）";
-                if (ReleasedAt.HasValue) s += $" · {ReleasedAt:yyyy-MM-dd}";
-                return s;
+                string hex = LanguageColors.TryGetValue(Language ?? "", out var c) ? c : "#808080";
+                return new SolidColorBrush(ParseHexColor(hex));
             }
         }
 
-        public string NotesText
+        public string UpdatedText => UpdatedAt.HasValue ? UpdatedAt.Value.ToString("yyyy-MM-dd") : "";
+
+        public string ReleaseBadgeText =>
+            string.IsNullOrWhiteSpace(LatestReleaseTag) ? "" : $"最新版本 {LatestReleaseTag}";
+
+        public string ReleaseDateText =>
+            ReleasedAt.HasValue ? ReleasedAt.Value.ToString("yyyy-MM-dd") : "";
+
+        public Visibility ReleaseVisibility =>
+            string.IsNullOrWhiteSpace(LatestReleaseTag) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility NotesVisibility =>
+            string.IsNullOrWhiteSpace(CleanNotes) ? Visibility.Collapsed : Visibility.Visible;
+
+        public Visibility DescriptionVisibility =>
+            string.IsNullOrWhiteSpace(Description) ? Visibility.Collapsed : Visibility.Visible;
+
+        /// <summary>去掉 Markdown 标记 / 隐藏注释后的发布说明摘要。</summary>
+        public string CleanNotes
         {
             get
             {
                 if (string.IsNullOrWhiteSpace(ReleaseNotes)) return "";
-                string n = ReleaseNotes!;
-                return n.Length > 400 ? n.Substring(0, 400) + "…" : n;
+
+                var sb = new StringBuilder();
+                foreach (var raw in ReleaseNotes!.Split('\n'))
+                {
+                    string l = raw.Trim();
+                    if (l.Length == 0) continue;
+                    if (l.Contains("<!--") || l.Contains("-->")) continue;
+
+                    l = l.TrimStart('#', '>', '-', '*', '•', ' ');
+                    l = Regex.Replace(l, @"!\[.*?\]\(.*?\)", "");
+                    l = Regex.Replace(l, @"\[(.*?)\]\(.*?\)", "$1");
+                    l = l.Replace("**", "").Replace("`", "").Replace("~~", "").Trim();
+
+                    if (l.Length == 0) continue;
+                    sb.AppendLine(l);
+                }
+
+                string result = sb.ToString().Trim();
+                return result.Length > 220 ? result.Substring(0, 220) + "…" : result;
             }
+        }
+
+        private static Windows.UI.Color ParseHexColor(string hex)
+        {
+            try
+            {
+                if (hex.Length == 7 && hex[0] == '#')
+                {
+                    return Windows.UI.Color.FromArgb(255,
+                        Convert.ToByte(hex.Substring(1, 2), 16),
+                        Convert.ToByte(hex.Substring(3, 2), 16),
+                        Convert.ToByte(hex.Substring(5, 2), 16));
+                }
+            }
+            catch { }
+
+            return Windows.UI.Color.FromArgb(255, 128, 128, 128);
         }
     }
 
@@ -119,7 +196,8 @@ namespace ShutdownTimer.Services
                 Stars = GetInt(repoData.Value, "stargazers_count"),
                 Forks = GetInt(repoData.Value, "forks_count"),
                 Language = GetString(repoData.Value, "language") ?? "",
-                HtmlUrl = GetString(repoData.Value, "html_url") ?? $"https://github.com/{Owner}/{repo}"
+                HtmlUrl = GetString(repoData.Value, "html_url") ?? $"https://github.com/{Owner}/{repo}",
+                OwnerAvatarUrl = GetNestedString(repoData.Value, "owner", "avatar_url") ?? ""
             };
             if (DateTime.TryParse(GetString(repoData.Value, "updated_at"), out var upd))
                 info.UpdatedAt = upd;
@@ -154,6 +232,14 @@ namespace ShutdownTimer.Services
         private static string? GetString(JsonElement e, string name)
         {
             if (e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String)
+                return v.GetString();
+            return null;
+        }
+
+        private static string? GetNestedString(JsonElement e, string parent, string child)
+        {
+            if (e.TryGetProperty(parent, out var p) && p.ValueKind == JsonValueKind.Object
+                && p.TryGetProperty(child, out var v) && v.ValueKind == JsonValueKind.String)
                 return v.GetString();
             return null;
         }
