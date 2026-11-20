@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -131,7 +131,15 @@ namespace ShutdownTimer
             bool silent = args.Any(a =>
                 a.Equals("/silent", StringComparison.OrdinalIgnoreCase));
 
-            // 单实例检测
+            bool guardian = args.Any(a =>
+                a.Equals("--guardian", StringComparison.OrdinalIgnoreCase));
+
+            // ★ 守护进程：需要与主进程并存，必须跳过单实例检测，
+            //   否则会弹出「定时关机程序已在运行中」并直接退出，导致守护失效。
+            if (guardian)
+                return RunWinUIApp();
+
+            // 单实例检测（仅主进程）
             using var mutex = new Mutex(true, "ShutdownTimer_SingleInstance_Mutex",
                 out bool createdNew);
 
@@ -151,7 +159,12 @@ namespace ShutdownTimer
                 return 0;
             }
 
-            // 首次启动
+            return RunWinUIApp();
+        }
+
+        /// <summary>启动 WinUI 应用（主进程与守护进程共用）。</summary>
+        private static int RunWinUIApp()
+        {
             try
             {
                 WinRT.ComWrappersSupport.InitializeComWrappers();
