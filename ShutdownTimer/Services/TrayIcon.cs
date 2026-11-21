@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -189,9 +189,9 @@ namespace ShutdownTimer.Services
 
             // 右键菜单
             _hMenu = CreatePopupMenu();
-            AppendMenu(_hMenu, MF_STRING, CMD_SHOW, "显示主窗口");
+            AppendMenu(_hMenu, MF_STRING, CMD_SHOW, Loc.T("显示主窗口"));
             AppendMenu(_hMenu, MF_SEPARATOR, 0, "");
-            AppendMenu(_hMenu, MF_STRING, CMD_EXIT, "退出");
+            AppendMenu(_hMenu, MF_STRING, CMD_EXIT, Loc.T("退出"));
 
             _ready.Set();
 

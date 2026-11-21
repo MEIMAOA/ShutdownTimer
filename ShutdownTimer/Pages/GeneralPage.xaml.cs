@@ -14,6 +14,7 @@ namespace ShutdownTimer.Pages
         public GeneralPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             LoadConfig();
         }
 
@@ -65,6 +66,7 @@ namespace ShutdownTimer.Pages
                     Margin = new Thickness(8, 0, 0, 0)
                 };
                 picker.Time = time;
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picker, Loc.T("时间选择器"));
                 Grid.SetColumn(picker, 1);
 
                 var remove = new Button

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShutdownTimer.Services;
@@ -17,6 +17,7 @@ namespace ShutdownTimer.Views
         public OnboardingWindow()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             this.AppWindow.Resize(new SizeInt32(800, 620));
             UpdateStep();
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShutdownTimer.Services;
 using System;
@@ -16,6 +16,7 @@ namespace ShutdownTimer.Pages
         public StartupPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             ItemsHost.ItemsSource = _items;
             _ = LoadItemsAsync();
         }
@@ -45,7 +46,7 @@ namespace ShutdownTimer.Pages
                 _items.Add(item);
             }
 
-            CountText.Text = $"共 {_items.Count} 项";
+            CountText.Text = Loc.T("共") + " " + _items.Count + " " + Loc.T("项");
             _isLoading = false;
         }
 
@@ -70,10 +71,10 @@ namespace ShutdownTimer.Pages
 
             var dialog = new ContentDialog
             {
-                Title = "删除启动项",
+                Title = Loc.T("删除启动项"),
                 Content = $"确定要删除「{item.Name}」吗？此操作会修改注册表或删除启动文件夹中的文件。",
-                PrimaryButtonText = "删除",
-                CloseButtonText = "取消",
+                PrimaryButtonText = Loc.T("删除"),
+                CloseButtonText = Loc.T("取消"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -84,7 +85,7 @@ namespace ShutdownTimer.Pages
             if (StartupItemManager.Delete(item))
                 _items.Remove(item);
 
-            CountText.Text = $"共 {_items.Count} 项";
+            CountText.Text = Loc.T("共") + " " + _items.Count + " " + Loc.T("项");
         }
     }
 }

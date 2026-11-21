@@ -16,6 +16,7 @@ namespace ShutdownTimer.Pages
         public SettingsPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             LoadSettings();
         }
 
@@ -40,6 +41,12 @@ namespace ShutdownTimer.Pages
                 if (TraySwitch != null) TraySwitch.IsOn = c.ShowInTray;
 
                 LoadDefaultPageBox(c.DefaultPage);
+                LoadLanguageBox(c.Language);
+
+                // 本地化标题 / 语言标签
+                PageTitleText.Text = Loc.T("设置");
+                LanguageTitle.Text = Loc.T("语言");
+                LanguageDesc.Text = Loc.T("选择界面显示语言");
 
                 // ★ 危险选项锁定状态
                 if (LockShutdownSwitch != null) LockShutdownSwitch.IsOn = c.LockShutdown;
@@ -133,17 +140,17 @@ namespace ShutdownTimer.Pages
                 var textBox = new TextBox
                 {
                     Text = c.UserName ?? "",
-                    PlaceholderText = "请输入新的用户名（1-20 字）",
+                    PlaceholderText = Loc.T("请输入新的用户名（1-20 字）"),
                     MaxLength = 20,
                     SelectionStart = (c.UserName ?? "").Length
                 };
 
                 var dialog = new ContentDialog
                 {
-                    Title = "编辑用户名",
+                    Title = Loc.T("编辑用户名"),
                     Content = textBox,
-                    PrimaryButtonText = "保存",
-                    CloseButtonText = "取消",
+                    PrimaryButtonText = Loc.T("保存"),
+                    CloseButtonText = Loc.T("取消"),
                     DefaultButton = ContentDialogButton.Primary,
                     XamlRoot = this.XamlRoot
                 };
@@ -156,9 +163,9 @@ namespace ShutdownTimer.Pages
                 {
                     var errDialog = new ContentDialog
                     {
-                        Title = "用户名不能为空",
-                        Content = "请重新输入用户名。",
-                        CloseButtonText = "确定",
+                        Title = Loc.T("用户名不能为空"),
+                        Content = Loc.T("请重新输入用户名。"),
+                        CloseButtonText = Loc.T("确定"),
                         XamlRoot = this.XamlRoot
                     };
                     await errDialog.ShowAsync();
@@ -372,10 +379,10 @@ namespace ShutdownTimer.Pages
 
                 var dlg = new ContentDialog
                 {
-                    Title = "重看教程",
-                    Content = "重置后，下次进入每个页面时会重新显示使用教程。",
-                    PrimaryButtonText = "重置",
-                    CloseButtonText = "取消",
+                    Title = Loc.T("重看教程"),
+                    Content = Loc.T("重置后，下次进入每个页面时会重新显示使用教程。"),
+                    PrimaryButtonText = Loc.T("重置"),
+                    CloseButtonText = Loc.T("取消"),
                     XamlRoot = this.XamlRoot
                 };
                 if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
@@ -436,7 +443,7 @@ namespace ShutdownTimer.Pages
             DefaultPageBox.Items.Clear();
             foreach (var (tag, name) in PageOptions)
             {
-                DefaultPageBox.Items.Add(new ComboBoxItem { Content = name, Tag = tag });
+                DefaultPageBox.Items.Add(new ComboBoxItem { Content = Loc.T(name), Tag = tag });
             }
 
             DefaultPageBox.SelectedIndex = 0;
@@ -458,6 +465,42 @@ namespace ShutdownTimer.Pages
                 var c = AppConfig.Load();
                 c.DefaultPage = tag;
                 c.Save();
+            }
+        }
+
+        // ==================== 语言 ====================
+
+        private void LoadLanguageBox(string currentLang)
+        {
+            if (LanguageBox == null) return;
+
+            LanguageBox.Items.Clear();
+            foreach (var code in Loc.Languages)
+            {
+                LanguageBox.Items.Add(new ComboBoxItem { Content = Loc.LanguageName(code), Tag = code });
+            }
+
+            LanguageBox.SelectedIndex = 0;
+            for (int i = 0; i < Loc.Languages.Length; i++)
+            {
+                if (Loc.Languages[i] == currentLang)
+                {
+                    LanguageBox.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        private void LanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isLoading) return;
+            if (LanguageBox.SelectedItem is ComboBoxItem item && item.Tag is string code)
+            {
+                var c = AppConfig.Load();
+                c.Language = code;
+                c.Save();
+
+                MainWindow.MainWindowInstance?.RefreshLanguage();
             }
         }
 

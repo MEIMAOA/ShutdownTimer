@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShutdownTimer.Services;
@@ -23,6 +23,7 @@ namespace ShutdownTimer.Views
         public TermsOverlay()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
 
             TermsText.Text = TermsOfService.GetFullText();
         }

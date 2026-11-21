@@ -24,11 +24,13 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Spacing="4">
-                        <TextBlock Text="主页"
+                        <TextBlock x:Name="PageTitleText"
+                                   Text="主页"
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="White"/>
-                        <TextBlock Text="来自 GitHub 的最新资讯"
+                        <TextBlock x:Name="SubtitleText"
+                                   Text="来自 GitHub 的最新资讯"
                                    FontSize="13"
                                    Foreground="#CCFFFFFF"/>
                         <TextBlock x:Name="SummaryText"
@@ -37,7 +39,8 @@
                                    Foreground="#B3FFFFFF"
                                    Margin="0,8,0,0"/>
                     </StackPanel>
-                    <Button Grid.Column="1"
+                    <Button x:Name="RefreshButton"
+                            Grid.Column="1"
                             Content="刷新"
                             VerticalAlignment="Top"
                             Padding="16,6"

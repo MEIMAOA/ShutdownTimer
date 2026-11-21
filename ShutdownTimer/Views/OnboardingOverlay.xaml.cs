@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.UI.Xaml;
@@ -38,6 +38,7 @@ namespace ShutdownTimer.Views
         public OnboardingOverlay()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             BuildSteps();
             ShowStep();
         }

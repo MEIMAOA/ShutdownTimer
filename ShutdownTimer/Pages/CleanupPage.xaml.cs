@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -15,6 +15,7 @@ namespace ShutdownTimer.Pages
         public CleanupPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             LargeFileHost.ItemsSource = _files;
             ScanPathText.Text = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             _ = UpdateTempSizeAsync();
@@ -22,19 +23,19 @@ namespace ShutdownTimer.Pages
 
         private async Task UpdateTempSizeAsync()
         {
-            TempSizeText.Text = "计算中…";
+            TempSizeText.Text = Loc.T("计算中…");
             var size = await Task.Run(() => CleanupService.GetDirectorySize(Path.GetTempPath()));
-            TempSizeText.Text = $"当前占用 {SystemInfoService.FormatBytes(size)}";
+            TempSizeText.Text = Loc.T("当前占用") + " " + SystemInfoService.FormatBytes(size);
         }
 
         private async void CleanTemp_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new ContentDialog
             {
-                Title = "清理临时文件",
-                Content = "将删除 %TEMP% 和 Windows\\Temp 中的临时文件，确定继续？",
-                PrimaryButtonText = "清理",
-                CloseButtonText = "取消",
+                Title = Loc.T("清理临时文件"),
+                Content = Loc.T("将删除 %TEMP% 和 Windows\\Temp 中的临时文件，确定继续？"),
+                PrimaryButtonText = Loc.T("清理"),
+                CloseButtonText = Loc.T("取消"),
                 DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = this.XamlRoot
             };
@@ -44,9 +45,9 @@ namespace ShutdownTimer.Pages
 
             var result = new ContentDialog
             {
-                Title = "清理完成",
-                Content = $"删除了 {count} 个文件，释放 {SystemInfoService.FormatBytes(freed)}",
-                CloseButtonText = "确定",
+                Title = Loc.T("清理完成"),
+                Content = Loc.T("删除了") + " " + count + " " + Loc.T("个文件，释放") + " " + SystemInfoService.FormatBytes(freed),
+                CloseButtonText = Loc.T("确定"),
                 XamlRoot = this.XamlRoot
             };
             await result.ShowAsync();
@@ -58,10 +59,10 @@ namespace ShutdownTimer.Pages
         {
             var dialog = new ContentDialog
             {
-                Title = "清空回收站",
-                Content = "确定要清空回收站吗？此操作不可撤销。",
-                PrimaryButtonText = "清空",
-                CloseButtonText = "取消",
+                Title = Loc.T("清空回收站"),
+                Content = Loc.T("确定要清空回收站吗？此操作不可撤销。"),
+                PrimaryButtonText = Loc.T("清空"),
+                CloseButtonText = Loc.T("取消"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };

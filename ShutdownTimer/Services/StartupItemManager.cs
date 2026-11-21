@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -29,9 +29,9 @@ namespace ShutdownTimer.Services
 
         public string LocationDisplay => Location switch
         {
-            StartupLocation.HKCU => "当前用户",
-            StartupLocation.HKLM => "所有用户",
-            StartupLocation.StartupFolder => "启动文件夹",
+            StartupLocation.HKCU => Loc.T("当前用户"),
+            StartupLocation.HKLM => Loc.T("所有用户"),
+            StartupLocation.StartupFolder => Loc.T("启动文件夹"),
             _ => ""
         };
     }

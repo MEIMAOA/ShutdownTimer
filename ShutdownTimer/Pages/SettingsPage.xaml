@@ -11,7 +11,8 @@
         <StackPanel Spacing="8">
 
             <!-- 标题 -->
-            <TextBlock Text="设置"
+            <TextBlock x:Name="PageTitleText"
+                       Text="设置"
                        Style="{ThemeResource TitleTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
             <TextBlock Text="调整用户信息、窗口外观与系统集成选项"
@@ -309,6 +310,31 @@
                               HorizontalAlignment="Right"
                               VerticalAlignment="Center"
                               SelectionChanged="DefaultPageBox_SelectionChanged"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCardBorderStyle}" Margin="0,4,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock x:Name="LanguageTitle"
+                                   Text="语言"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock x:Name="LanguageDesc"
+                                   Text="选择界面显示语言"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1"
+                              x:Name="LanguageBox"
+                              MinWidth="160"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              SelectionChanged="LanguageBox_SelectionChanged"/>
                 </Grid>
             </Border>
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -135,9 +135,9 @@ namespace ShutdownTimer.Services
 
         public static string FormatUptime(TimeSpan t)
         {
-            if (t.TotalDays >= 1) return $"{(int)t.TotalDays} 天 {t.Hours} 小时 {t.Minutes} 分";
-            if (t.TotalHours >= 1) return $"{t.Hours} 小时 {t.Minutes} 分";
-            return $"{t.Minutes} 分 {t.Seconds} 秒";
+            if (t.TotalDays >= 1) return $"{(int)t.TotalDays} {Loc.T("天")} {t.Hours} {Loc.T("小时")} {t.Minutes} {Loc.T("分")}";
+            if (t.TotalHours >= 1) return $"{t.Hours} {Loc.T("小时")} {t.Minutes} {Loc.T("分")}";
+            return $"{t.Minutes} {Loc.T("分")} {t.Seconds} {Loc.T("秒")}";
         }
 
         // ---- 进程 ----

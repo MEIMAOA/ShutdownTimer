@@ -111,6 +111,10 @@ namespace ShutdownTimer
                 catch { }
             };
 
+            // 提前加载语言，供启动期对话框本地化
+            try { ShutdownTimer.Services.Loc.Set(ShutdownTimer.Services.AppConfig.Load().Language); }
+            catch { }
+
             // ★ 系统版本检查（Win10 1809 以下不支持）
             try
             {
@@ -149,8 +153,8 @@ namespace ShutdownTimer
                 if (!silent)
                 {
                     int result = MessageBox(IntPtr.Zero,
-                        "定时关机程序已在运行中。\n\n是否打开已开启的程序窗口？",
-                        "定时关机",
+                        ShutdownTimer.Services.Loc.T("定时关机程序已在运行中。\n\n是否打开已开启的程序窗口？"),
+                        "ShutdownTimer",
                         MB_YESNO | MB_ICONQUESTION | MB_TOPMOST);
 
                     if (result == IDYES)

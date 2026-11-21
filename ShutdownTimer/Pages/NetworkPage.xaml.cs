@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -15,6 +15,7 @@ namespace ShutdownTimer.Pages
         public NetworkPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             AdapterHost.ItemsSource = _adapters;
             DiagHost.ItemsSource = _pings;
 

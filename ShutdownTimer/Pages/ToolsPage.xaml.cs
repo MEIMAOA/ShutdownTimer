@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShutdownTimer.Services;
 
@@ -6,7 +6,11 @@ namespace ShutdownTimer.Pages
 {
     public sealed partial class ToolsPage : Page
     {
-        public ToolsPage() => this.InitializeComponent();
+        public ToolsPage()
+        {
+            this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
+        }
 
         // 系统设置
         private void Display_Click(object s, RoutedEventArgs e) => ShellLauncher.OpenDisplaySettings();

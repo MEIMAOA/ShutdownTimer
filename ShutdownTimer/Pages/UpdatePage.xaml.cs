@@ -18,9 +18,9 @@ namespace ShutdownTimer.Pages
         public UpdatePage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
 
-            var v = Assembly.GetExecutingAssembly().GetName().Version;
-            CurrentVersionText.Text = v != null ? $"v{v}" : "v2.0.0.2";
+            CurrentVersionText.Text = BuildInfo.GetDisplayVersion();
 
             _loading = true;
             var cfg = AppConfig.Load();
@@ -73,31 +73,31 @@ namespace ShutdownTimer.Pages
 
             if (!_update.HasUpdate)
             {
-                StatusText.Text = $"已是最新版本（v{_update.CurrentVersion}）。";
+                StatusText.Text = Loc.T("已是最新版本") + "（v" + _update.CurrentVersion + "）。";
                 return;
             }
 
             string sizeText = _update.FileSize > 0
                 ? $"{_update.FileSize / 1048576.0:F1} MB"
-                : "未知大小";
+                : Loc.T("未知大小");
 
             if (_update.IsChannelSwitch)
             {
                 StatusText.Text =
-                    $"将切换到「{UpdateService.GetChannelDisplayName()}」渠道\n\n" +
-                    $"当前版本：v{_update.CurrentVersion}\n" +
-                    $"目标版本：{_update.LatestVersion}\n" +
-                    $"包大小：{sizeText}\n\n" +
-                    $"更新内容：\n{_update.ReleaseNotes}";
+                    Loc.T("将切换到") + "「" + UpdateService.GetChannelDisplayName() + "」" + Loc.T("渠道") + "\n\n" +
+                    Loc.T("当前版本：") + "v" + _update.CurrentVersion + "\n" +
+                    Loc.T("目标版本：") + _update.LatestVersion + "\n" +
+                    Loc.T("包大小：") + sizeText + "\n\n" +
+                    Loc.T("更新内容：") + "\n" + _update.ReleaseNotes;
             }
             else
             {
                 StatusText.Text =
-                    $"发现新版本 {_update.LatestVersion}\n\n" +
-                    $"当前版本：v{_update.CurrentVersion}\n" +
-                    $"最新版本：{_update.LatestVersion}\n" +
-                    $"包大小：{sizeText}\n\n" +
-                    $"更新内容：\n{_update.ReleaseNotes}";
+                    Loc.T("发现新版本") + " " + _update.LatestVersion + "\n\n" +
+                    Loc.T("当前版本：") + "v" + _update.CurrentVersion + "\n" +
+                    Loc.T("最新版本：") + _update.LatestVersion + "\n" +
+                    Loc.T("包大小：") + sizeText + "\n\n" +
+                    Loc.T("更新内容：") + "\n" + _update.ReleaseNotes;
             }
 
             InstallButton.Visibility = Visibility.Visible;
@@ -141,6 +141,10 @@ namespace ShutdownTimer.Pages
 
                 StatusText.Text = "正在启动更新程序…";
                 await Task.Delay(400);
+
+                // ★ 记录本次更新的版本与内容，更新完成后弹出
+                UpdateService.SavePendingUpdateNotes(
+                    _update.LatestVersion ?? "", _update.ReleaseNotes ?? "");
 
                 // ★ 用 try-catch 包裹，把错误显示出来
                 try

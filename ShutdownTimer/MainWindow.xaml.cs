@@ -24,12 +24,19 @@ namespace ShutdownTimer
         private string? _tutorialShowingTag;
         private bool _onboardingShowing = false;
         private Microsoft.UI.Dispatching.DispatcherQueueTimer? _scheduleTimer;
-        private Microsoft.UI.Dispatching.DispatcherQueueTimer? _prankTimer;
 
         public MainWindow()
         {
             this.InitializeComponent();
             MainWindowInstance = this;
+
+            var config = AppConfig.Load();
+
+            // 语言（必须在本地化之前设置）
+            Loc.Set(config.Language);
+
+            // 本地化静态 XAML 文案（导航项另由 ApplyNavLocalization 处理）
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
 
             TitleBarText.Text = BuildInfo.AppName;
 
@@ -54,12 +61,19 @@ namespace ShutdownTimer
                 rootFe.ActualThemeChanged += (s, e) => UpdateTitleBarTheme();
             UpdateTitleBarTheme();
 
-            var config = AppConfig.Load();
             ApplyBackgroundImage(config.BackgroundImagePath);
             ApplyShowBackgroundImage(config.ShowBackgroundImage);
             AppearancePage.ApplyTheme(config.AppTheme);
 
             LoadUserInfo(config);
+
+            // 导航栏本地化
+            ApplyNavLocalization();
+
+            // 本地化导航折叠按钮提示（WinUI 内置文案跟随系统语言）
+            NavView.Loaded += (s, ev) => LocalizePaneToggle();
+            NavView.PaneOpened += (s, ev) => LocalizePaneToggle();
+            NavView.PaneClosed += (s, ev) => LocalizePaneToggle();
 
             // 教育分支版才显示"软件管控"入口
             EducationNavItem.Visibility = BuildInfo.IsEducation
@@ -72,7 +86,7 @@ namespace ShutdownTimer
             // 教育分支版：启动软件拦截
             try { SoftwareBlocker.Start(); } catch { }
 
-            // 教育分支版：全局 Alt+L 退出 + 整活弹窗
+            // 教育分支版：全局 Alt+L 退出
             if (BuildInfo.IsEducation)
             {
                 try
@@ -81,8 +95,6 @@ namespace ShutdownTimer
                         () => DispatcherQueue.TryEnqueue(() => ProcessGuard.ExitGracefully()));
                 }
                 catch { }
-
-                SetupPrankTimer();
             }
 
             // 自动识别微软账户 / 本地账户，填充用户名与头像
@@ -107,6 +119,9 @@ namespace ShutdownTimer
                 _ = CheckMicrosoftAccountAsync();
                 _ = AutoCheckUpdateAsync();
             }
+
+            // 更新完成后弹出本次更新内容
+            DispatcherQueue.TryEnqueue(ShowPostUpdateNotesIfAny);
         }
 
         // ==================== SystemBackdrop ====================
@@ -267,97 +282,6 @@ namespace ShutdownTimer
             catch { }
         }
 
-        // ==================== 整活（教育分支版）====================
-
-        private void SetupPrankTimer()
-        {
-            try
-            {
-                _prankTimer = DispatcherQueue.CreateTimer();
-                _prankTimer.Interval = TimeSpan.FromSeconds(40);
-                _prankTimer.IsRepeating = true;
-                _prankTimer.Tick += (s, e) => ShowRandomPrank();
-                _prankTimer.Start();
-            }
-            catch { }
-        }
-
-        private void ShowRandomPrank()
-        {
-            try
-            {
-                if (!BuildInfo.IsEducation) return;
-                if (_onboardingShowing) return;
-                if (OverlayHost.Visibility == Visibility.Visible) return; // 正在显示引导/教程/条款
-                if (Random.Shared.Next(100) >= 55) return;                // 约 55% 概率触发
-
-                var (_, text) = PrankService.Next();
-                ShowPrankOverlay(text);
-            }
-            catch { }
-        }
-
-        /// <summary>弹出一条整活提示，点击任意空白处关闭。</summary>
-        private void ShowPrankOverlay(string text)
-        {
-            try
-            {
-                // 确保窗口可见（后台时也能"弹出"）
-                this.AppWindow.Show();
-                this.Activate();
-
-                var root = new Grid
-                {
-                    Background = new SolidColorBrush(Windows.UI.Color.FromArgb(40, 0, 0, 0))
-                };
-
-                root.PointerPressed += (s, e) =>
-                {
-                    OverlayHost.Children.Clear();
-                    OverlayHost.Visibility = Visibility.Collapsed;
-                };
-
-                var card = new Border
-                {
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Padding = new Thickness(28, 22, 28, 22),
-                    CornerRadius = new CornerRadius(12),
-                    MaxWidth = 460,
-                    Background = new SolidColorBrush(Windows.UI.Color.FromArgb(235, 32, 32, 32)),
-                    BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(60, 255, 255, 255)),
-                    BorderThickness = new Thickness(1)
-                };
-
-                var panel = new StackPanel { Spacing = 10 };
-
-                panel.Children.Add(new TextBlock
-                {
-                    Text = text,
-                    FontSize = 16,
-                    TextWrapping = TextWrapping.Wrap,
-                    TextAlignment = TextAlignment.Center,
-                    Foreground = new SolidColorBrush(Microsoft.UI.Colors.White)
-                });
-
-                panel.Children.Add(new TextBlock
-                {
-                    Text = "点击空白处关闭",
-                    FontSize = 11,
-                    TextAlignment = TextAlignment.Center,
-                    Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(150, 255, 255, 255))
-                });
-
-                card.Child = panel;
-                root.Children.Add(card);
-
-                OverlayHost.Children.Clear();
-                OverlayHost.Children.Add(root);
-                OverlayHost.Visibility = Visibility.Visible;
-            }
-            catch { }
-        }
-
         // ==================== 用户使用条款 ====================
 
         private void ShowTermsRequired()
@@ -433,6 +357,48 @@ namespace ShutdownTimer
             OverlayHost.Visibility = Visibility.Visible;
         }
 
+        // ==================== 更新完成后弹窗 ====================
+
+        private async void ShowPostUpdateNotesIfAny()
+        {
+            try
+            {
+                // 等待窗口内容加载完成，确保 XamlRoot 可用
+                await Task.Delay(700);
+
+                var notes = UpdateService.LoadAndClearPendingUpdateNotes();
+                if (notes == null || string.IsNullOrWhiteSpace(notes.Version)) return;
+
+                string versionText = notes.Version.Trim();
+                if (!versionText.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                    versionText = "v" + versionText;
+
+                string cleanNotes = UpdateService.CleanReleaseNotes(notes.Notes);
+                string content = versionText + "\n\n" + Loc.T("更新内容：") + "\n" + cleanNotes;
+
+                var dialog = new ContentDialog
+                {
+                    Title = Loc.T("更新完成"),
+                    Content = new ScrollViewer
+                    {
+                        Content = new TextBlock
+                        {
+                            Text = content,
+                            TextWrapping = TextWrapping.Wrap,
+                            MaxWidth = 480
+                        },
+                        MaxHeight = 420
+                    },
+                    CloseButtonText = Loc.T("确定"),
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = (Content as FrameworkElement)?.XamlRoot
+                };
+
+                await dialog.ShowAsync();
+            }
+            catch { }
+        }
+
         // ==================== 自动检查更新 ====================
 
         private async Task AutoCheckUpdateAsync()
@@ -449,13 +415,13 @@ namespace ShutdownTimer
 
                 var dialog = new ContentDialog
                 {
-                    Title = "发现新版本",
-                    Content = $"当前版本：v{update.CurrentVersion}\n" +
-                              $"最新版本：{update.LatestVersion}\n\n" +
-                              $"更新内容：\n{update.ReleaseNotes}\n\n" +
-                              "是否前往「检查更新」页面？",
-                    PrimaryButtonText = "前往更新",
-                    CloseButtonText = "稍后",
+                    Title = Loc.T("发现新版本"),
+                    Content = Loc.T("当前版本：") + "v" + update.CurrentVersion + "\n" +
+                              Loc.T("最新版本：") + update.LatestVersion + "\n\n" +
+                              Loc.T("更新内容：") + "\n" + update.ReleaseNotes + "\n\n" +
+                              Loc.T("是否前往「检查更新」页面？"),
+                    PrimaryButtonText = Loc.T("前往更新"),
+                    CloseButtonText = Loc.T("稍后"),
                     DefaultButton = ContentDialogButton.Primary,
                     XamlRoot = (this.Content as FrameworkElement)?.XamlRoot
                 };
@@ -494,15 +460,10 @@ namespace ShutdownTimer
 
                 var dialog = new ContentDialog
                 {
-                    Title = "建议登录微软账户",
-                    Content = "检测到你当前使用的是本地账户。\n\n" +
-                              "登录微软账户可以：\n" +
-                              "• 跨设备同步设置和文件\n" +
-                              "• 更方便地找回密码\n" +
-                              "• 使用 OneDrive 云存储\n\n" +
-                              "是否现在去系统设置？",
-                    PrimaryButtonText = "去登录",
-                    CloseButtonText = "稍后",
+                    Title = Loc.T("建议登录微软账户"),
+                    Content = Loc.T("检测到你当前使用的是本地账户。\n\n登录微软账户可以：\n• 跨设备同步设置和文件\n• 更方便地找回密码\n• 使用 OneDrive 云存储\n\n是否现在去系统设置？"),
+                    PrimaryButtonText = Loc.T("去登录"),
+                    CloseButtonText = Loc.T("稍后"),
                     DefaultButton = ContentDialogButton.Primary,
                     XamlRoot = (this.Content as FrameworkElement)?.XamlRoot
                 };
@@ -746,6 +707,89 @@ namespace ShutdownTimer
             }
 
             NavView.SelectedItem = target ?? NavView.MenuItems[0];
+        }
+
+        /// <summary>导航项 tag → 中文文本。</summary>
+        private static string NavText(string tag) => tag switch
+        {
+            "home" => "主页",
+            "general" => "定时关机",
+            "startup" => "启动项",
+            "apps" => "应用",
+            "sysstatus" => "系统状态",
+            "cleanup" => "清理优化",
+            "network" => "网络连接",
+            "monitoring" => "系统监控",
+            "tools" => "常用工具",
+            "security" => "安全隐私",
+            "automation" => "自动化",
+            "appearance" => "外观体验",
+            "update" => "检查更新",
+            "education" => "软件管控",
+            "about" => "关于",
+            "settings" => "设置",
+            _ => ""
+        };
+
+        /// <summary>按当前语言更新导航项文字。</summary>
+        private void ApplyNavLocalization()
+        {
+            foreach (var menuItem in NavView.MenuItems)
+            {
+                if (menuItem is NavigationViewItem nvi && nvi.Tag is string tag)
+                {
+                    string zh = NavText(tag);
+                    if (zh.Length > 0) nvi.Content = Loc.T(zh);
+                }
+            }
+
+            foreach (var footerItem in NavView.FooterMenuItems)
+            {
+                if (footerItem is NavigationViewItem nvi && nvi.Tag is string tag)
+                {
+                    string zh = NavText(tag);
+                    if (zh.Length > 0) nvi.Content = Loc.T(zh);
+                }
+            }
+        }
+
+        /// <summary>本地化导航折叠（汉堡）按钮的提示与无障碍名称。</summary>
+        private void LocalizePaneToggle()
+        {
+            try
+            {
+                var toggle = FindNamedElement(NavView, "TogglePaneButton");
+                if (toggle == null) return;
+                string text = Loc.T("导航");
+                ToolTipService.SetToolTip(toggle, text);
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(toggle, text);
+            }
+            catch { }
+        }
+
+        private static FrameworkElement? FindNamedElement(DependencyObject root, string name)
+        {
+            if (root is FrameworkElement fe && fe.Name == name) return fe;
+            int n = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < n; i++)
+            {
+                var r = FindNamedElement(Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(root, i), name);
+                if (r != null) return r;
+            }
+            return null;
+        }
+
+        /// <summary>切换语言后刷新导航与当前页。</summary>
+        public void RefreshLanguage()
+        {
+            Loc.Set(AppConfig.Load().Language);
+            ApplyNavLocalization();
+            LocalizePaneToggle();
+
+            if (ContentFrame.CurrentSourcePageType is Type t)
+            {
+                ContentFrame.Navigate(t);
+            }
         }
 
         // ==================== 导航 + 教程 ====================

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -18,6 +18,7 @@ namespace ShutdownTimer.Pages
         public AppsPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             ItemsHost.ItemsSource = _filtered;
             _ = LoadAppsAsync();
         }
@@ -68,7 +69,7 @@ namespace ShutdownTimer.Pages
             foreach (var app in source)
                 _filtered.Add(app);
 
-            CountText.Text = $"共 {_filtered.Count} 项";
+            CountText.Text = Loc.T("共") + " " + _filtered.Count + " " + Loc.T("项");
         }
 
         private async void Refresh_Click(object sender, RoutedEventArgs e)
@@ -90,17 +91,17 @@ namespace ShutdownTimer.Pages
 
             if (string.IsNullOrWhiteSpace(app.UninstallString))
             {
-                await ShowMessage("无法卸载",
+                await ShowMessage(Loc.T("无法卸载"),
                     $"「{app.Name}」没有提供卸载信息，请通过系统「设置 → 应用」手动卸载。");
                 return;
             }
 
             var confirm = new ContentDialog
             {
-                Title = "卸载应用",
+                Title = Loc.T("卸载应用"),
                 Content = $"确定要卸载「{app.Name}」吗？\n\n系统会启动该应用的卸载程序，请按提示完成操作。",
-                PrimaryButtonText = "卸载",
-                CloseButtonText = "取消",
+                PrimaryButtonText = Loc.T("卸载"),
+                CloseButtonText = Loc.T("取消"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -120,7 +121,7 @@ namespace ShutdownTimer.Pages
             }
             catch (Exception ex)
             {
-                await ShowMessage("卸载失败", ex.Message);
+                await ShowMessage(Loc.T("卸载失败"), ex.Message);
             }
         }
 
@@ -130,7 +131,7 @@ namespace ShutdownTimer.Pages
             {
                 Title = title,
                 Content = content,
-                CloseButtonText = "确定",
+                CloseButtonText = Loc.T("确定"),
                 XamlRoot = this.XamlRoot
             };
             await dlg.ShowAsync();

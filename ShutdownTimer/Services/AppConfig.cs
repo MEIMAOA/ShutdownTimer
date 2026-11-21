@@ -26,6 +26,9 @@ namespace ShutdownTimer.Services
         /// <summary>启动时默认打开的页面 tag（默认 home 主页）。</summary>
         public string DefaultPage { get; set; } = "home";
 
+        /// <summary>界面语言（zh-CN / zh-TW / en / ja / ko）。</summary>
+        public string Language { get; set; } = "zh-CN";
+
         // 定时关机
         public bool Enabled { get; set; } = false;
         public int ShutdownHour { get; set; } = 23;

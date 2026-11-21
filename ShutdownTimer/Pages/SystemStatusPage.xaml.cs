@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,6 +13,7 @@ namespace ShutdownTimer.Pages
         public SystemStatusPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             DiskHost.ItemsSource = _disks;
             Refresh();
         }
@@ -26,7 +27,7 @@ namespace ShutdownTimer.Pages
                 OsText.Text = SystemInfoService.GetOsName();
                 UptimeText.Text = SystemInfoService.FormatUptime(SystemInfoService.GetUptime());
                 CpuText.Text = SystemInfoService.GetCpuName();
-                CoresText.Text = $"{SystemInfoService.GetCpuCores()} 线程";
+                CoresText.Text = SystemInfoService.GetCpuCores() + " " + Loc.T("线程");
 
                 var mem = SystemInfoService.GetMemory();
                 MemoryText.Text = $"{SystemInfoService.FormatBytes(mem.totalBytes - mem.availBytes)} / " +
@@ -36,7 +37,7 @@ namespace ShutdownTimer.Pages
                 foreach (var d in SystemInfoService.GetDisks())
                     _disks.Add(d);
 
-                UpdatedText.Text = $"更新于 {DateTime.Now:HH:mm:ss}";
+                UpdatedText.Text = Loc.T("更新于") + " " + DateTime.Now.ToString("HH:mm:ss");
             }
             catch { }
         }

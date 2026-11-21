@@ -83,7 +83,7 @@ namespace ShutdownTimer.Services
 
         [JsonIgnore]
         public string ReleaseBadgeText =>
-            string.IsNullOrWhiteSpace(LatestReleaseTag) ? "" : $"最新版本 {LatestReleaseTag}";
+            string.IsNullOrWhiteSpace(LatestReleaseTag) ? "" : Loc.T("最新版本") + " " + LatestReleaseTag;
 
         [JsonIgnore]
         public string ReleaseDateText =>

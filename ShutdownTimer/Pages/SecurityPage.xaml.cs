@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using ShutdownTimer.Services;
@@ -10,16 +10,17 @@ namespace ShutdownTimer.Pages
         public SecurityPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             _ = LoadAsync();
         }
 
         private async Task LoadAsync()
         {
-            RtText.Text = "查询中…";
+            RtText.Text = Loc.T("查询中…");
             SigText.Text = "";
 
             var s = await SecurityService.GetDefenderStatusAsync();
-            RtText.Text = s.RealTimeEnabled ? "已开启" : "未开启";
+            RtText.Text = s.RealTimeEnabled ? Loc.T("已开启") : Loc.T("未开启");
             SigText.Text = s.SignatureLastUpdated;
         }
 

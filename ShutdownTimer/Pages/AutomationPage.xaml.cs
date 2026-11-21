@@ -12,6 +12,7 @@ namespace ShutdownTimer.Pages
         public AutomationPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             Load();
         }
 

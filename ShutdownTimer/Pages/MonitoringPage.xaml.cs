@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -18,8 +18,9 @@ namespace ShutdownTimer.Pages
         public MonitoringPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             ProcHost.ItemsSource = _filtered;
-            UptimeText.Text = "开机时长：" + SystemInfoService.FormatUptime(SystemInfoService.GetUptime());
+            UptimeText.Text = Loc.T("开机时长：") + SystemInfoService.FormatUptime(SystemInfoService.GetUptime());
             _ = LoadAsync();
         }
 
@@ -42,7 +43,7 @@ namespace ShutdownTimer.Pages
 
             foreach (var p in src) _filtered.Add(p);
 
-            CountText.Text = $"共 {_filtered.Count} 个进程";
+            CountText.Text = Loc.T("共") + " " + _filtered.Count + " " + Loc.T("个进程");
         }
 
         private async void Refresh_Click(object sender, RoutedEventArgs e) => await LoadAsync();
@@ -56,10 +57,10 @@ namespace ShutdownTimer.Pages
 
             var dialog = new ContentDialog
             {
-                Title = "结束进程",
+                Title = Loc.T("结束进程"),
                 Content = $"确定要结束「{p.Name}」(PID {p.Id}) 吗？",
-                PrimaryButtonText = "结束",
-                CloseButtonText = "取消",
+                PrimaryButtonText = Loc.T("结束"),
+                CloseButtonText = Loc.T("取消"),
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
@@ -76,9 +77,9 @@ namespace ShutdownTimer.Pages
             {
                 var err = new ContentDialog
                 {
-                    Title = "无法结束进程",
+                    Title = Loc.T("无法结束进程"),
                     Content = ex.Message,
-                    CloseButtonText = "确定",
+                    CloseButtonText = Loc.T("确定"),
                     XamlRoot = this.XamlRoot
                 };
                 await err.ShowAsync();

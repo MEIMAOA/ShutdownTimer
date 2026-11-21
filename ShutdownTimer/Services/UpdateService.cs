@@ -49,6 +49,14 @@ namespace ShutdownTimer.Services
         public bool IsChannelSwitch { get; set; }
     }
 
+    /// <summary>待展示的更新内容（更新完成后弹出）。</summary>
+    public class PendingUpdateNotes
+    {
+        public string? Version { get; set; }
+        public string? Notes { get; set; }
+        public DateTime SavedAt { get; set; }
+    }
+
     public static class UpdateService
     {
         // ============================================================
@@ -522,6 +530,53 @@ namespace ShutdownTimer.Services
             }
             catch { }
         }
+
+        // ==================== 更新完成后弹窗 ====================
+
+        /// <summary>在启动 Updater 前记录本次更新的版本与内容，更新完成后弹出。</summary>
+        public static void SavePendingUpdateNotes(string version, string notes)
+        {
+            try
+            {
+                string path = GetPendingNotesPath();
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllText(path, JsonSerializer.Serialize(new PendingUpdateNotes
+                {
+                    Version = version,
+                    Notes = notes,
+                    SavedAt = DateTime.Now
+                }));
+            }
+            catch { }
+        }
+
+        /// <summary>读取并清除待展示的更新内容（读取后即删除，保证只弹一次）。</summary>
+        public static PendingUpdateNotes? LoadAndClearPendingUpdateNotes()
+        {
+            try
+            {
+                string path = GetPendingNotesPath();
+                if (!File.Exists(path)) return null;
+                var notes = JsonSerializer.Deserialize<PendingUpdateNotes>(File.ReadAllText(path));
+                try { File.Delete(path); } catch { }
+                return notes;
+            }
+            catch { return null; }
+        }
+
+        /// <summary>去掉更新内容里的 SHA256 注释等非展示内容。</summary>
+        public static string CleanReleaseNotes(string? notes)
+        {
+            if (string.IsNullOrWhiteSpace(notes)) return "";
+            return Regex.Replace(notes,
+                @"<!--\s*SHA256\s*:\s*[a-fA-F0-9]{64}\s*-->", "",
+                RegexOptions.IgnoreCase).Trim();
+        }
+
+        private static string GetPendingNotesPath()
+            => Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Chronos", "pending_update_notes.json");
 
         // ==================== 版本解析 ====================
 

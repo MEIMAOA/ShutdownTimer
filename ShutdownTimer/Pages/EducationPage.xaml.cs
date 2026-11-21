@@ -15,6 +15,7 @@ namespace ShutdownTimer.Pages
         public EducationPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
             Load();
         }
 

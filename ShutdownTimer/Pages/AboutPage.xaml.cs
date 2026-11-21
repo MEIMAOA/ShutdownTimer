@@ -225,9 +225,9 @@ namespace ShutdownTimer.Pages
         public AboutPage()
         {
             this.InitializeComponent();
+            ShutdownTimer.Services.Localizer.ApplyOnLoaded(Content as Microsoft.UI.Xaml.FrameworkElement);
 
-            var ver = Assembly.GetExecutingAssembly().GetName().Version;
-            VersionText.Text = ver != null ? $"v{ver}" : "v1.0.0";
+            VersionText.Text = BuildInfo.GetDisplayVersion();
             AppNameText.Text = BuildInfo.AppName;
             ConfigPathText.Text = AppConfig.GetConfigPath();
         }
@@ -275,7 +275,7 @@ namespace ShutdownTimer.Pages
             {
                 Title = "Apache License 2.0",
                 Content = scrollViewer,
-                CloseButtonText = "关闭",
+                CloseButtonText = Loc.T("关闭"),
                 XamlRoot = this.XamlRoot
             };
 
@@ -293,9 +293,9 @@ namespace ShutdownTimer.Pages
 
             var dialog = new ContentDialog
             {
-                Title = "用户使用条款",
+                Title = Loc.T("用户使用条款"),
                 Content = overlay,
-                CloseButtonText = "关闭",
+                CloseButtonText = Loc.T("关闭"),
                 XamlRoot = this.XamlRoot
             };
 
