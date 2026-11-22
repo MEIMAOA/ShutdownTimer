@@ -12,8 +12,9 @@ namespace ShutdownTimer.Services
 
         public static void Run()
         {
-            // 隐藏窗口，维持消息循环（不调用 Activate，不显示）
+            // 隐藏窗口，维持消息循环（不调用 Activate，并显式强制隐藏）
             _holder = new Window { Title = "ShutdownTimer Guardian" };
+            HiddenWindowHelper.EnsureHidden(_holder);
 
             try
             {

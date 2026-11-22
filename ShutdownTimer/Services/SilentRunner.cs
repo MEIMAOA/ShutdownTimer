@@ -20,7 +20,8 @@ namespace ShutdownTimer.Services
             {
                 Title = "ShutdownTimer Background"
             };
-            // 不调用 Activate()，窗口不会显示
+            // 不调用 Activate()；再显式强制隐藏，防止被意外显示
+            HiddenWindowHelper.EnsureHidden(_holderWindow);
 
             StartScheduleTimer(_holderWindow.DispatcherQueue);
 
