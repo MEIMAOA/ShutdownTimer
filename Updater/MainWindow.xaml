@@ -4,27 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="更新">
 
-    <Window.SystemBackdrop>
-        <DesktopAcrylicBackdrop/>
-    </Window.SystemBackdrop>
-
-    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-        <!-- 顶部淡色光斑 -->
-        <Grid IsHitTestVisible="False">
-            <Ellipse Width="520" Height="360"
-                     HorizontalAlignment="Center" VerticalAlignment="Top"
-                     Margin="0,-170,0,0" Opacity="0.45">
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#5C7CB8FF" Offset="0"/>
-                        <GradientStop Color="#1A7CB8FF" Offset="0.6"/>
-                        <GradientStop Color="#007CB8FF" Offset="1"/>
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
-        </Grid>
-
-        <Grid Padding="44,34,44,30">
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <Grid Padding="44,40,44,30">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -34,28 +15,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- ① Logo + 应用名 -->
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="14">
-                <Border Width="58" Height="58" CornerRadius="16" HorizontalAlignment="Center">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#FF5B8CFF" Offset="0"/>
-                            <GradientStop Color="#FF7C5CFF" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <FontIcon Glyph="&#xE823;" FontSize="28"
-                              Foreground="White"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                </Border>
-
-                <TextBlock x:Name="TxtAppName"
-                           Text="时序"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
+            <!-- ① 应用名（简洁标题，无图标） -->
+            <TextBlock x:Name="TxtAppName"
+                       Grid.Row="0"
+                       Text="时序"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                       HorizontalAlignment="Center"/>
 
             <!-- ② 正在更新到新版本 X -->
             <TextBlock x:Name="TxtStatus"
@@ -66,10 +33,10 @@
                        HorizontalAlignment="Center"
                        TextWrapping="Wrap"
                        TextAlignment="Center"
-                       Margin="0,26,0,0"/>
+                       Margin="0,10,0,0"/>
 
             <!-- ③ 进度条 -->
-            <Grid Grid.Row="2" Height="4" Margin="0,22,0,10">
+            <Grid Grid.Row="2" Height="4" Margin="0,30,0,10">
                 <Border CornerRadius="2"
                         Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
                 <Border x:Name="ProgressFill"
@@ -90,12 +57,11 @@
                 <TextBlock x:Name="TxtPercent"
                            Text="0%"
                            FontSize="12"
-                           FontWeight="SemiBold"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                            HorizontalAlignment="Right"/>
             </Grid>
 
-            <!-- ⑤ 更新内容框 -->
+            <!-- ⑤ 更新内容 -->
             <Border Grid.Row="4"
                     CornerRadius="8"
                     Background="{ThemeResource ControlFillColorSecondaryBrush}"

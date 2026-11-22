@@ -182,7 +182,7 @@ namespace ShutdownTimer.Updater
             {
                 App.Log($"显示错误: {message}");
                 TxtStatus.Text = "更新失败";
-                TxtProgressLabel.Text = "更新失败";
+                TxtProgressLabel.Text = "";
                 TxtPercent.Text = "";
                 TxtError.Text = message;
                 TxtError.Visibility = Visibility.Visible;
