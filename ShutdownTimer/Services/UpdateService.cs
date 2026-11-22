@@ -258,8 +258,26 @@ namespace ShutdownTimer.Services
 
         // ==================== 下载 ====================
 
+        /// <summary>国内 GitHub 加速镜像前缀（第三方；仅加速下载，SHA256 仍会校验完整性）。</summary>
+        private static readonly string[] GitHubMirrors =
+        {
+            "https://ghfast.top",
+            "https://ghproxy.net"
+        };
+
+        /// <summary>按 GitHub 原始下载地址构建候选源（镜像优先，GitHub 兜底）。</summary>
+        private static string[] BuildDownloadCandidates(string githubUrl)
+        {
+            var list = new string[GitHubMirrors.Length + 1];
+            for (int i = 0; i < GitHubMirrors.Length; i++)
+                list[i] = GitHubMirrors[i].TrimEnd('/') + "/" + githubUrl;
+            list[list.Length - 1] = githubUrl;
+            return list;
+        }
+
         public static async Task<string> DownloadUpdateAsync(
             string downloadUrl,
+            long expectedSize,
             IProgress<double>? progress,
             CancellationToken ct = default)
         {
@@ -281,13 +299,56 @@ namespace ShutdownTimer.Services
             string tempPath = Path.Combine(tempDir,
                 $"update_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N").Substring(0, 6)}.zip");
 
-            using var response = await _http.GetAsync(downloadUrl,
-                HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            var candidates = BuildDownloadCandidates(downloadUrl);
+            Exception? lastEx = null;
+
+            foreach (var url in candidates)
+            {
+                if (ct.IsCancellationRequested) throw new OperationCanceledException(ct);
+
+                try
+                {
+                    await DownloadOneAsync(url, tempPath, expectedSize, progress, ct).ConfigureAwait(false);
+                    return tempPath;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    lastEx = ex;
+                    progress?.Report(0);
+                    try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"所有下载源均失败，最后错误：{lastEx?.Message ?? "未知"}", lastEx);
+        }
+
+        /// <summary>从单个地址下载。连接/响应头阶段 20 秒超时，避免坏镜像卡住；校验文件大小。</summary>
+        private static async Task DownloadOneAsync(
+            string url,
+            string tempPath,
+            long expectedSize,
+            IProgress<double>? progress,
+            CancellationToken ct)
+        {
+            using var headersCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            headersCts.CancelAfter(TimeSpan.FromSeconds(20));
+
+            using var response = await _http.GetAsync(url,
+                HttpCompletionOption.ResponseHeadersRead, headersCts.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             long totalBytes = response.Content.Headers.ContentLength ?? -1L;
 
-            using (var contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            if (expectedSize > 0 && totalBytes > 0 && totalBytes != expectedSize)
+                throw new InvalidOperationException(
+                    $"下载大小不符（期望 {expectedSize}，实际 {totalBytes}）");
+
+            using (var contentStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
             using (var fileStream = new FileStream(tempPath, FileMode.Create,
                 FileAccess.Write, FileShare.None, 81920, useAsync: true))
             {
@@ -312,7 +373,6 @@ namespace ShutdownTimer.Services
             }
 
             progress?.Report(100.0);
-            return tempPath;
         }
 
         // ==================== SHA256 校验 ====================

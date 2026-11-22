@@ -27,6 +27,14 @@ namespace ShutdownTimer.Updater
 
             try { this.AppWindow.Resize(new SizeInt32(640, 480)); } catch { }
 
+            // ★ 自绘标题栏
+            try
+            {
+                this.ExtendsContentIntoTitleBar = true;
+                this.SetTitleBar(TitleBarRegion);
+            }
+            catch { }
+
             _appDir = GetArg(args, "--app-dir") ?? "";
             _zipPath = GetArg(args, "--zip") ?? "";
             _exeName = GetArg(args, "--exe") ?? "ShutdownTimer.exe";
@@ -39,6 +47,7 @@ namespace ShutdownTimer.Updater
 
             // 顶部应用名
             TxtAppName.Text = _appName;
+            TxtTitleBar.Text = _appName + " · 更新";
             try { this.Title = _appName + " · 更新"; } catch { }
 
             // 正在更新到新版本 X
@@ -193,6 +202,24 @@ namespace ShutdownTimer.Updater
         private async void BtnRetry_Click(object sender, RoutedEventArgs e) => await RunUpdateAsync();
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            _completed = true;
+            Microsoft.UI.Xaml.Application.Current.Exit();
+        }
+
+        // ==================== 自绘标题栏按钮 ====================
+
+        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (this.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+                    p.Minimize();
+            }
+            catch { }
+        }
+
+        private void BtnCloseTitle_Click(object sender, RoutedEventArgs e)
         {
             _completed = true;
             Microsoft.UI.Xaml.Application.Current.Exit();

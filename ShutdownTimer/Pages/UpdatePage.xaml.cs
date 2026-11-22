@@ -123,7 +123,7 @@ namespace ShutdownTimer.Pages
                 });
 
                 string zipPath = await UpdateService.DownloadUpdateAsync(
-                    _update.DownloadUrl, progress, CancellationToken.None);
+                    _update.DownloadUrl, _update.FileSize, progress, CancellationToken.None);
 
                 if (!string.IsNullOrEmpty(_update.Sha256))
                 {

@@ -5,7 +5,51 @@
     Title="更新">
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
-        <Grid Padding="44,40,44,30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ==================== 自绘标题栏 ==================== -->
+        <Grid x:Name="TitleBarRegion" Grid.Row="0" Height="36" Background="Transparent">
+            <TextBlock x:Name="TxtTitleBar"
+                       Text="更新"
+                       Margin="16,0,0,0"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextTrimming="CharacterEllipsis"/>
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,6,0"
+                        Spacing="2">
+                <Button x:Name="BtnMinimize"
+                        Click="BtnMinimize_Click"
+                        Width="34" Height="30"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTipService.ToolTip="最小化">
+                    <FontIcon Glyph="&#xE921;" FontSize="10"
+                              Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Button>
+                <Button x:Name="BtnCloseTitle"
+                        Click="BtnCloseTitle_Click"
+                        Width="34" Height="30"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTipService.ToolTip="关闭">
+                    <FontIcon Glyph="&#xE8BB;" FontSize="10"
+                              Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ==================== 内容 ==================== -->
+        <Grid Grid.Row="1" Padding="44,14,44,28">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -15,7 +59,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- ① 应用名（简洁标题，无图标） -->
+            <!-- ① 应用名 -->
             <TextBlock x:Name="TxtAppName"
                        Grid.Row="0"
                        Text="时序"
@@ -36,7 +80,7 @@
                        Margin="0,10,0,0"/>
 
             <!-- ③ 进度条 -->
-            <Grid Grid.Row="2" Height="4" Margin="0,30,0,10">
+            <Grid Grid.Row="2" Height="4" Margin="0,26,0,10">
                 <Border CornerRadius="2"
                         Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
                 <Border x:Name="ProgressFill"
