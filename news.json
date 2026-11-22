@@ -1,0 +1,80 @@
+{
+    "updated_at":  "2026-11-22T04:17:37Z",
+    "repos":  [
+                  {
+                      "full_name":  "MEIMAOA/ShutdownTimer-Edu",
+                      "name":  "ShutdownTimer-Edu",
+                      "description":  "ShutdownTimer education branch (app blocking feature)",
+                      "stars":  1,
+                      "forks":  0,
+                      "language":  "C#",
+                      "html_url":  "https://github.com/MEIMAOA/ShutdownTimer-Edu",
+                      "owner_avatar_url":  "https://avatars.githubusercontent.com/u/260392218?v=4",
+                      "updated_at":  "2026-11-20T13:08:29Z",
+                      "latest_release_tag":  "v1.0.0.3-Edu",
+                      "latest_release_name":  "v1.0.0.3-Edu",
+                      "release_notes":  "\u003c!-- SHA256: 03f36fd609975c85dbbbe49d84523c19f928f72b959ffa0b2c2812a0a1a1120e --\u003e\n\n- 更新程序标题栏改为自绘（标题 + 最小化/关闭），不再出现系统白色标题栏\n- 下载更新新增国内镜像回退：优先 ghfast.top / ghproxy.net，失败再回退 GitHub 直连\n- 下载时校验文件大小，防止镜像返回异常内容；SHA256 完整性校验保持不变",
+                      "released_at":  "2026-11-22T03:56:05Z"
+                  },
+                  {
+                      "full_name":  "MEIMAOA/ShutdownTimer",
+                      "name":  "ShutdownTimer",
+                      "description":  "",
+                      "stars":  2,
+                      "forks":  0,
+                      "language":  "C#",
+                      "html_url":  "https://github.com/MEIMAOA/ShutdownTimer",
+                      "owner_avatar_url":  "https://avatars.githubusercontent.com/u/260392218?v=4",
+                      "updated_at":  "2026-11-19T11:28:47Z",
+                      "latest_release_tag":  "v2.0.0.16",
+                      "latest_release_name":  "v2.0.0.16",
+                      "release_notes":  "\u003c!-- SHA256: 6d577820de7ebb3749191020d27bbe660aae4419ddb11dc6318aa7228d55202a --\u003e\n\n- 更新程序标题栏改为自绘（标题 + 最小化/关闭），不再出现系统白色标题栏\n- 下载更新新增国内镜像回退：优先 ghfast.top / ghproxy.net，失败再回退 GitHub 直连\n- 下载时校验文件大小，防止镜像返回异常内容；SHA256 完整性校验保持不变",
+                      "released_at":  "2026-11-22T03:50:31Z"
+                  },
+                  {
+                      "full_name":  "MEIMAOA/SysKit",
+                      "name":  "SysKit",
+                      "description":  "专业 Windows 系统工具箱（SysKit）：硬件信息、性能监控、进程/启动项/服务、系统维护、网络诊断、显示与投影、电源；支持图吧工具箱自动下载安装与 EduKit 自动更新。WPF + WinUI 风格，兼容 Windows 7 SP1+。非商业许可。",
+                      "stars":  2,
+                      "forks":  0,
+                      "language":  "C#",
+                      "html_url":  "https://github.com/MEIMAOA/SysKit",
+                      "owner_avatar_url":  "https://avatars.githubusercontent.com/u/260392218?v=4",
+                      "updated_at":  "2026-11-14T08:51:20Z",
+                      "latest_release_tag":  "v1.4.0",
+                      "latest_release_name":  "SysKit v1.4.0 · 仓库迁移与磁盘分析",
+                      "release_notes":  "# SysKit v1.4.0 · 仓库迁移 + 磁盘分析 + SMART + 性能导出\n\n## 仓库迁移\n\n本版本起，GitHub 仓库由 MEIMAOA/EduKit 正式更名为 **MEIMAOA/SysKit**：\n- 新地址：https://github.com/MEIMAOA/SysKit\n- 旧地址（EduKit）自动 301 跳转到新地址；\n- README / 应用内 GitHub 链接 / 自动更新服务均已切换到新仓库；\n- 可执行文件与资产仍沿用内部标识 EduKit.exe / EduKit-v*.zip，保证从 v1.3.0 平滑自动更新。\n\n## 新增功能\n\n- **磁盘分析**：选择任意文件夹或磁盘，扫描**目录占用排名**与**最大的文件**（前 100 个），双击定位文件位置，支持取消；\n- **SMART 硬盘健康详情**：读取硬盘温度、通电时长、重映射扇区、预测失败状态（root\\WMI，需管理员权限）；\n- **性能监控导出**：把 CPU / 内存 / 磁盘 / 网络历史曲线一键导出为 CSV；\n- 版本号 1.4.0，截图与自检更新。\n\n## 下载与使用\n\n1. 下载 `EduKit-v1.4.0.zip` 解压到有写入权限的目录；\n2. 双击 `EduKit.exe` 运行；\n3. 需要 .NET Framework 4.6.2+（Windows 10/11 通常自带 4.8；Windows 7 请先安装 SP1 与 [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48)）。\n\n## 校验\n\n- SHA256：`59913cfc2750cb113136265d34f2beba4b857f7d1115271207d988596dfa1f9b`\n- 大小：150675 字节\n\n## 开源协议\n\n[PolyForm Noncommercial License 1.0.0](https://github.com/MEIMAOA/SysKit/blob/main/LICENSE) © 2026 MEIMAOA（禁止商业使用）",
+                      "released_at":  "2026-10-31T03:31:28Z"
+                  },
+                  {
+                      "full_name":  "MEIMAOA/SnakeLauncher",
+                      "name":  "SnakeLauncher",
+                      "description":  "现代化 WPF 贪吃蛇游戏启动器（.NET 10 / 鹰角风格 UI / 一键安装 / 自定义背景）",
+                      "stars":  3,
+                      "forks":  0,
+                      "language":  "C#",
+                      "html_url":  "https://github.com/MEIMAOA/SnakeLauncher",
+                      "owner_avatar_url":  "https://avatars.githubusercontent.com/u/260392218?v=4",
+                      "updated_at":  "2026-11-14T08:51:21Z",
+                      "latest_release_tag":  "v6.0.1.0",
+                      "latest_release_name":  "SnakeLauncherWPF 6.0.1.0",
+                      "release_notes":  "# v6.0.1.0\n\n## 新增 / 改进\n- **自动检测游戏更新**：启动后自动比对已安装版本与 GitHub Releases 最新版本；发现新版后首页按钮变为「更新游戏」，副标题显示 `v旧版本 → v新版本`，点击安装该版本（包含预发布版本）。\n- **三条杠游戏菜单**：开始按钮右侧菜单改为游戏操作项：\n  - 游戏设置（查看版本/路径/类型）\n  - 添加桌面快捷方式\n  - 游戏完整性检查（SHA256 + 防作弊哈希校验）\n  - 清理下载缓存\n- **移除下载界面**：左侧导航精简为「启动 / 数据 / 设置 / 关于」，下载/更新统一由首页按钮完成。\n- **强制启动器更新**：启动后自动检查，发现新版本后直接下载并启动 Updater，不再提供「稍后 / 跳过此版本 / 自动检查」选项。\n\n## Updater UI\n- 更大的 560×380 玻璃卡片、品牌图标；\n- 8px 圆角进度条、更清晰的百分比与状态文字；\n- 失败状态提示与可重试/关闭按钮；\n- 支持拖动无边框窗口。\n\n## 版本\n- 启动器与 Updater 版本号均更新为 **6.0.1.0**。\n\n## 下载（三架构）\n- SnakeLauncherWPF_6.0.1.0-Windows64.zip（Windows x64）\n- SnakeLauncherWPF_6.0.1.0-Windows32.zip（Windows x86）\n- SnakeLauncherWPF_6.0.1.0-WindowsARM64.zip（Windows on ARM）\n\n以上均为框架依赖发布，解压后运行 SnakeLauncherWPF.exe，需要安装 .NET 10 Desktop Runtime。",
+                      "released_at":  "2026-10-24T11:43:59Z"
+                  },
+                  {
+                      "full_name":  "MEIMAOA/SnakeGame",
+                      "name":  "SnakeGame",
+                      "description":  "贪吃蛇游戏合集：五种贪吃蛇模式 + 明日方舟式 3D 塔防 · Windows / Android / WebGL（Unity/Tuanjie 2022.3），配套 SnakeLauncherWPF 启动器",
+                      "stars":  2,
+                      "forks":  0,
+                      "language":  "C#",
+                      "html_url":  "https://github.com/MEIMAOA/SnakeGame",
+                      "owner_avatar_url":  "https://avatars.githubusercontent.com/u/260392218?v=4",
+                      "updated_at":  "2026-11-14T08:51:23Z",
+                      "latest_release_tag":  "v9.0.0",
+                      "latest_release_name":  "SnakeGame v9.0.0",
+                      "release_notes":  "## v9.0.0 首个正式版\n\n- **贪吃蛇**：经典 / 计时赛 / 占领 4v4 / 极速 / 撤离·搜打撤\n- **塔防 3D**：明日方舟风格 —— 10 关逐一解锁、技能与技力、近战阻挡、敌人攻击干员、战前敌人动线预览、开始行动\n- **界面**：Windows 11 亚克力风格、设置页显示自定义背景、系统原生文件对话框、UTF-8 路径、自适应文字\n- 主界面标题显示 v9.0.0，调试参数已关闭\n\n### 下载\n- SnakeGame-v9.0.0-Windows64.zip（Windows 64 位）\n- SnakeGame-v9.0.0-Windows32.zip（Windows 32 位）\n\n解压后运行 SnakeGame.exe。",
+                      "released_at":  "2026-10-17T15:23:17Z"
+                  }
+              ]
+}

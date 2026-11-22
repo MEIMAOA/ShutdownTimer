@@ -10,7 +10,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ==================== 自绘标题栏 ==================== -->
+        <!-- ==================== 自绘标题栏（标题 + 系统原生窗口按钮）==================== -->
         <Grid x:Name="TitleBarRegion" Grid.Row="0" Height="36" Background="Transparent">
             <TextBlock x:Name="TxtTitleBar"
                        Text="更新"
@@ -18,34 +18,8 @@
                        VerticalAlignment="Center"
                        FontSize="12"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       TextTrimming="CharacterEllipsis"/>
-
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Margin="0,0,6,0"
-                        Spacing="2">
-                <Button x:Name="BtnMinimize"
-                        Click="BtnMinimize_Click"
-                        Width="34" Height="30"
-                        Padding="0"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        ToolTipService.ToolTip="最小化">
-                    <FontIcon Glyph="&#xE921;" FontSize="10"
-                              Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                </Button>
-                <Button x:Name="BtnCloseTitle"
-                        Click="BtnCloseTitle_Click"
-                        Width="34" Height="30"
-                        Padding="0"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        ToolTipService.ToolTip="关闭">
-                    <FontIcon Glyph="&#xE8BB;" FontSize="10"
-                              Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                </Button>
-            </StackPanel>
+                       TextTrimming="CharacterEllipsis"
+                       MaxWidth="440"/>
         </Grid>
 
         <!-- ==================== 内容 ==================== -->

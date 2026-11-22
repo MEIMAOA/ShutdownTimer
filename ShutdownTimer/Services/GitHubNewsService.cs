@@ -207,6 +207,16 @@ namespace ShutdownTimer.Services
                 return result;
             }
 
+            // 优先从国内镜像获取静态 news.json（只需 1 次请求，国内速度快）
+            var mirrored = await TryFetchFromMirrorAsync();
+            if (mirrored != null && mirrored.Count > 0)
+            {
+                SaveCache(mirrored);
+                result.Repos = mirrored;
+                result.FetchedAt = DateTime.Now;
+                return result;
+            }
+
             var repos = new List<RepoInfo>();
             bool rateLimited = false;
 
@@ -250,6 +260,73 @@ namespace ShutdownTimer.Services
             return result;
         }
 
+        /// <summary>资讯镜像：官方仓库根目录的 news.json，经 GitHub 加速镜像获取。</summary>
+        private static readonly string[] NewsMirrors =
+        {
+            "https://ghfast.top/https://github.com/MEIMAOA/ShutdownTimer/raw/main/news.json",
+            "https://ghproxy.net/https://github.com/MEIMAOA/ShutdownTimer/raw/main/news.json",
+            "https://github.com/MEIMAOA/ShutdownTimer/raw/main/news.json"
+        };
+
+        /// <summary>从镜像获取静态 news.json（一次请求拿全部仓库资讯），失败返回 null。</summary>
+        private static async Task<List<RepoInfo>?> TryFetchFromMirrorAsync()
+        {
+            foreach (var url in NewsMirrors)
+            {
+                try
+                {
+                    using var response = await _http.GetAsync(url).ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode) continue;
+
+                    string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+
+                    JsonElement arr;
+                    if (root.ValueKind == JsonValueKind.Array) arr = root;
+                    else if (root.TryGetProperty("repos", out var r) && r.ValueKind == JsonValueKind.Array) arr = r;
+                    else continue;
+
+                    var list = new List<RepoInfo>();
+                    foreach (var item in arr.EnumerateArray())
+                    {
+                        var info = ParseRepoFromNews(item);
+                        if (info != null) list.Add(info);
+                    }
+                    if (list.Count > 0) return list;
+                }
+                catch { }
+            }
+            return null;
+        }
+
+        private static RepoInfo? ParseRepoFromNews(JsonElement e)
+        {
+            try
+            {
+                var info = new RepoInfo
+                {
+                    FullName = GetString(e, "full_name") ?? "",
+                    Name = GetString(e, "name") ?? "",
+                    Description = GetString(e, "description") ?? "",
+                    Stars = GetInt(e, "stars"),
+                    Forks = GetInt(e, "forks"),
+                    Language = GetString(e, "language") ?? "",
+                    HtmlUrl = GetString(e, "html_url") ?? "",
+                    OwnerAvatarUrl = GetString(e, "owner_avatar_url") ?? "",
+                    LatestReleaseTag = GetString(e, "latest_release_tag"),
+                    LatestReleaseName = GetString(e, "latest_release_name"),
+                    ReleaseNotes = GetString(e, "release_notes")
+                };
+
+                if (DateTime.TryParse(GetString(e, "updated_at"), out var u)) info.UpdatedAt = u;
+                if (DateTime.TryParse(GetString(e, "released_at"), out var r)) info.ReleasedAt = r;
+
+                return (info.FullName.Length > 0 || info.Name.Length > 0) ? info : null;
+            }
+            catch { return null; }
+        }
+
         private static async Task<(RepoInfo? info, HttpStatusCode status)> FetchRepoAsync(string repo)
         {
             var (repoData, status) = await GetJsonAsync($"https://api.github.com/repos/{Owner}/{repo}");
@@ -287,21 +364,43 @@ namespace ShutdownTimer.Services
             return (info, status);
         }
 
-        private static async Task<(JsonElement? data, HttpStatusCode status)> GetJsonAsync(string url)
-        {
-            try
-            {
-                using var response = await _http.GetAsync(url);
-                if (!response.IsSuccessStatusCode) return (null, response.StatusCode);
+        /// <summary>国内 GitHub API 代理前缀（allorigins 可转发 api.github.com）。</summary>
+        private const string ApiProxyPrefix = "https://api.allorigins.win/raw?url=";
 
-                string json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                return (doc.RootElement.Clone(), response.StatusCode);
-            }
-            catch
+        private static async Task<(JsonElement? data, HttpStatusCode status)> GetJsonAsync(string apiUrl)
+        {
+            // 国内优先走代理镜像，失败回退直连
+            var urls = new[]
             {
-                return (null, HttpStatusCode.ServiceUnavailable);
+                ApiProxyPrefix + Uri.EscapeDataString(apiUrl),
+                apiUrl
+            };
+
+            HttpStatusCode lastStatus = HttpStatusCode.ServiceUnavailable;
+
+            foreach (var url in urls)
+            {
+                try
+                {
+                    using var response = await _http.GetAsync(url).ConfigureAwait(false);
+                    lastStatus = response.StatusCode;
+                    if (!response.IsSuccessStatusCode) continue;
+
+                    string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+
+                    // 只接受有效数据：仓库信息含 full_name，Release 信息含 tag_name
+                    if (root.ValueKind == JsonValueKind.Object &&
+                        (root.TryGetProperty("full_name", out _) || root.TryGetProperty("tag_name", out _)))
+                    {
+                        return (root.Clone(), response.StatusCode);
+                    }
+                }
+                catch { }
             }
+
+            return (null, lastStatus);
         }
 
         // ==================== 缓存 ====================

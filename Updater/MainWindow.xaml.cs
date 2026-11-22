@@ -207,24 +207,6 @@ namespace ShutdownTimer.Updater
             Microsoft.UI.Xaml.Application.Current.Exit();
         }
 
-        // ==================== 自绘标题栏按钮 ====================
-
-        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (this.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
-                    p.Minimize();
-            }
-            catch { }
-        }
-
-        private void BtnCloseTitle_Click(object sender, RoutedEventArgs e)
-        {
-            _completed = true;
-            Microsoft.UI.Xaml.Application.Current.Exit();
-        }
-
         private static string? GetArg(string[] args, string key)
         {
             if (args == null) return null;
