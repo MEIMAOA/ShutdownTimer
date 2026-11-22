@@ -149,7 +149,8 @@ namespace ShutdownTimer.Pages
                 // ★ 用 try-catch 包裹，把错误显示出来
                 try
                 {
-                    UpdateService.LaunchUpdater(zipPath);
+                    UpdateService.LaunchUpdater(zipPath,
+                        _update.LatestVersion ?? "", _update.ReleaseNotes ?? "");
                 }
                 catch (Exception exLaunch)
                 {

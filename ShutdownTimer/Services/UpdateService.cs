@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -337,7 +338,7 @@ namespace ShutdownTimer.Services
 
         // ==================== 启动 Updater ====================
 
-        public static void LaunchUpdater(string zipPath)
+        public static void LaunchUpdater(string zipPath, string version, string notes)
         {
             string logPath = Path.Combine(Path.GetTempPath(), "ShutdownTimer_Update.log");
             void Log(string msg)
@@ -351,7 +352,7 @@ namespace ShutdownTimer.Services
             }
 
             Log("=== LaunchUpdater 进入 ===");
-            Log($"zipPath = {zipPath}");
+            Log($"zipPath = {zipPath}, version = {version}");
 
             if (string.IsNullOrWhiteSpace(zipPath))
                 throw new ArgumentException("zip 路径为空", nameof(zipPath));
@@ -371,19 +372,28 @@ namespace ShutdownTimer.Services
             catch { }
             Log($"currentExeName = {currentExeName}");
 
-            // ★ Updater 是子目录
+            // ★ 第一步：在主程序更新前，先把更新程序替换为更新包中的最新版本
             string updaterSrcDir = Path.Combine(appDir, "Updater");
             string updaterExeInSrc = Path.Combine(updaterSrcDir, "ShutdownTimer.Updater.exe");
 
-            Log($"updaterSrcDir = {updaterSrcDir}");
-            Log($"updaterExeInSrc 存在 = {File.Exists(updaterExeInSrc)}");
+            Log("正在从更新包提取最新更新程序...");
+            try
+            {
+                ExtractUpdaterFromZip(zipPath, appDir, Log);
+            }
+            catch (Exception ex)
+            {
+                Log($"!! 提取更新程序失败（将回退到现有更新程序）: {ex.Message}");
+            }
 
+            // ★ 第二步：确认更新程序存在
+            Log($"替换后 updaterExeInSrc 存在 = {File.Exists(updaterExeInSrc)}");
             if (!File.Exists(updaterExeInSrc))
             {
                 throw new FileNotFoundException(
-                    $"Updater 目录不存在或不完整。\n" +
+                    $"更新程序不存在或不完整。\n" +
                     $"查找路径：{updaterExeInSrc}\n" +
-                    "请确认发布包中包含了 Updater 子目录。", updaterExeInSrc);
+                    "请确认更新包中包含了 Updater 子目录。", updaterExeInSrc);
             }
 
             // 创建临时目录
@@ -392,7 +402,7 @@ namespace ShutdownTimer.Services
             Directory.CreateDirectory(tempDir);
             Log($"tempDir = {tempDir}");
 
-            // ★ 复制整个 Updater 目录到 %TEMP%
+            // ★ 第三步：复制最新 Updater 到 %TEMP% 并启动
             try
             {
                 foreach (var file in Directory.GetFiles(updaterSrcDir, "*", SearchOption.AllDirectories))
@@ -404,7 +414,7 @@ namespace ShutdownTimer.Services
                         Directory.CreateDirectory(dstDir);
                     File.Copy(file, dst, overwrite: true);
                 }
-                Log($"Updater 目录已复制到: {tempDir}");
+                Log($"最新 Updater 目录已复制到: {tempDir}");
             }
             catch (Exception ex)
             {
@@ -413,6 +423,16 @@ namespace ShutdownTimer.Services
             }
 
             string updaterTempPath = Path.Combine(tempDir, "ShutdownTimer.Updater.exe");
+
+            // 写更新说明到临时文件，供更新程序显示
+            string notesFile = "";
+            try
+            {
+                notesFile = Path.Combine(tempDir, "update_notes.txt");
+                File.WriteAllText(notesFile, CleanReleaseNotes(notes));
+                Log($"更新说明已写入: {notesFile}");
+            }
+            catch { notesFile = ""; }
 
             // 读主题
             string themeMode = "System";
@@ -433,7 +453,10 @@ namespace ShutdownTimer.Services
                 $"--exe \"{currentExeName}\" " +
                 $"--temp-dir \"{tempDir}\" " +
                 $"--theme \"{themeMode}\" " +
-                $"--accent \"{accentColor}\"";
+                $"--accent \"{accentColor}\" " +
+                $"--version \"{version}\" " +
+                $"--app-name \"{BuildInfo.AppName}\" " +
+                (string.IsNullOrWhiteSpace(notesFile) ? "" : $"--notes-file \"{notesFile}\" ");
 
             Log($"启动命令: {updaterTempPath} {arguments}");
 
@@ -463,6 +486,34 @@ namespace ShutdownTimer.Services
             }
 
             Log("LaunchUpdater 完成");
+        }
+
+        /// <summary>从更新包中只提取 Updater/ 目录，用最新更新程序替换旧版本。</summary>
+        private static void ExtractUpdaterFromZip(string zipPath, string appDir, Action<string> log)
+        {
+            using var archive = ZipFile.OpenRead(zipPath);
+            int count = 0;
+
+            foreach (var entry in archive.Entries)
+            {
+                if (string.IsNullOrEmpty(entry.Name)) continue; // 跳过目录项
+
+                string fullName = entry.FullName.Replace('\\', '/');
+                if (!fullName.StartsWith("Updater/", StringComparison.OrdinalIgnoreCase)) continue;
+
+                string rel = fullName.Substring("Updater/".Length);
+                if (string.IsNullOrWhiteSpace(rel)) continue;
+
+                string destPath = Path.Combine(appDir, "Updater", rel.Replace('/', '\\'));
+                string? destDir = Path.GetDirectoryName(destPath);
+                if (!string.IsNullOrEmpty(destDir)) Directory.CreateDirectory(destDir);
+
+                try { File.SetAttributes(destPath, FileAttributes.Normal); } catch { }
+                entry.ExtractToFile(destPath, overwrite: true);
+                count++;
+            }
+
+            log($"从更新包提取了 {count} 个更新程序文件到 {Path.Combine(appDir, "Updater")}");
         }
 
         // ==================== 清理 ====================

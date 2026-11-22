@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 
 namespace ShutdownTimer.Updater
@@ -12,8 +12,12 @@ namespace ShutdownTimer.Updater
         private readonly string _zipPath;
         private readonly string _exeName;
         private readonly string _tempDir;
+        private readonly string _version;
+        private readonly string _notesFile;
+        private readonly string _appName;
         private UpdateEngine? _engine;
         private bool _completed;
+        private double _trackWidth = 552;
 
         public MainWindow(string[] args)
         {
@@ -21,14 +25,31 @@ namespace ShutdownTimer.Updater
             this.InitializeComponent();
             App.Log("InitializeComponent 完成");
 
-            try { this.AppWindow.Resize(new SizeInt32(560, 380)); } catch { }
+            try { this.AppWindow.Resize(new SizeInt32(640, 480)); } catch { }
 
             _appDir = GetArg(args, "--app-dir") ?? "";
             _zipPath = GetArg(args, "--zip") ?? "";
             _exeName = GetArg(args, "--exe") ?? "ShutdownTimer.exe";
             _tempDir = GetArg(args, "--temp-dir") ?? "";
+            _version = GetArg(args, "--version") ?? "";
+            _notesFile = GetArg(args, "--notes-file") ?? "";
+            _appName = GetArg(args, "--app-name") ?? "时序";
 
-            App.Log($"参数: appDir={_appDir}, zip={_zipPath}, exe={_exeName}");
+            App.Log($"参数: appDir={_appDir}, zip={_zipPath}, exe={_exeName}, version={_version}");
+
+            // 顶部应用名
+            TxtAppName.Text = _appName;
+            try { this.Title = _appName + " · 更新"; } catch { }
+
+            // 正在更新到新版本 X
+            TxtStatus.Text = string.IsNullOrWhiteSpace(_version)
+                ? "正在更新到新版本"
+                : "正在更新到新版本 " + _version;
+
+            // 更新内容
+            TxtNotes.Text = LoadNotes(_notesFile);
+            if (string.IsNullOrWhiteSpace(TxtNotes.Text))
+                TxtNotes.Text = "暂无更新说明";
 
             this.Activated += MainWindow_Activated;
         }
@@ -42,14 +63,25 @@ namespace ShutdownTimer.Updater
             }
         }
 
+        private static string LoadNotes(string notesFile)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(notesFile) && File.Exists(notesFile))
+                    return File.ReadAllText(notesFile).Trim();
+            }
+            catch { }
+            return "";
+        }
+
         private async Task RunUpdateAsync()
         {
             App.Log("RunUpdateAsync 触发");
 
             if (string.IsNullOrWhiteSpace(_appDir)) { ShowError("缺少参数: --app-dir"); return; }
             if (string.IsNullOrWhiteSpace(_zipPath)) { ShowError("缺少参数: --zip"); return; }
-            if (!System.IO.File.Exists(_zipPath)) { ShowError($"更新包不存在:\n{_zipPath}"); return; }
-            if (!System.IO.Directory.Exists(_appDir)) { ShowError($"应用目录不存在:\n{_appDir}"); return; }
+            if (!File.Exists(_zipPath)) { ShowError($"更新包不存在:\n{_zipPath}"); return; }
+            if (!Directory.Exists(_appDir)) { ShowError($"应用目录不存在:\n{_appDir}"); return; }
 
             App.Log("参数校验通过，开始更新");
 
@@ -58,13 +90,7 @@ namespace ShutdownTimer.Updater
             TxtError.Text = "";
             ProgressFill.Width = 0;
             TxtPercent.Text = "0%";
-
-            try
-            {
-                ProgressFill.Background =
-                    (Brush)Microsoft.UI.Xaml.Application.Current.Resources["AccentFillColorDefaultBrush"];
-            }
-            catch { }
+            TxtProgressLabel.Text = "正在准备...";
 
             _engine = new UpdateEngine();
             _engine.ProgressChanged += OnProgressChanged;
@@ -102,12 +128,12 @@ namespace ShutdownTimer.Updater
             this.DispatcherQueue.TryEnqueue(() =>
             {
                 App.Log($"[{p.Percentage:F0}%] {p.Message}");
-                TxtStatus.Text = p.Message ?? "";
+
+                TxtProgressLabel.Text = p.Message ?? "";
 
                 if (p.Percentage >= 0)
                 {
-                    double trackWidth = 560 - 32 - 76;
-                    double targetWidth = trackWidth * Math.Min(100, p.Percentage) / 100.0;
+                    double targetWidth = _trackWidth * Math.Min(100, p.Percentage) / 100.0;
                     ProgressFill.Width = targetWidth;
                     TxtPercent.Text = $"{p.Percentage:F0}%";
                 }
@@ -121,12 +147,12 @@ namespace ShutdownTimer.Updater
         private static void ScheduleTempDirCleanup(string tempDir)
         {
             if (string.IsNullOrWhiteSpace(tempDir)) return;
-            if (!System.IO.Directory.Exists(tempDir)) return;
+            if (!Directory.Exists(tempDir)) return;
 
             try
             {
-                string batPath = System.IO.Path.Combine(
-                    System.IO.Path.GetTempPath(),
+                string batPath = Path.Combine(
+                    Path.GetTempPath(),
                     "cleanup_updater_" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".bat");
 
                 string script =
@@ -135,7 +161,7 @@ namespace ShutdownTimer.Updater
                     $"rmdir /s /q \"{tempDir}\" 2>nul\r\n" +
                     $"del /f /q \"%~f0\" 2>nul\r\n";
 
-                System.IO.File.WriteAllText(batPath, script, System.Text.Encoding.Default);
+                File.WriteAllText(batPath, script, System.Text.Encoding.Default);
 
                 var psi = new System.Diagnostics.ProcessStartInfo
                 {
@@ -156,16 +182,11 @@ namespace ShutdownTimer.Updater
             {
                 App.Log($"显示错误: {message}");
                 TxtStatus.Text = "更新失败";
+                TxtProgressLabel.Text = "更新失败";
+                TxtPercent.Text = "";
                 TxtError.Text = message;
                 TxtError.Visibility = Visibility.Visible;
                 BottomButtons.Visibility = Visibility.Visible;
-
-                try
-                {
-                    ProgressFill.Background =
-                        (Brush)Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCriticalBrush"];
-                }
-                catch { }
             });
         }
 
