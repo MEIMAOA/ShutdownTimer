@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-22T04:41:55Z",
+  "updated_at": "2026-11-23T11:45:44Z",
   "repos": [
     {
       "full_name": "MEIMAOA/ShutdownTimer-Edu",
@@ -11,10 +11,10 @@
       "html_url": "https://github.com/MEIMAOA/ShutdownTimer-Edu",
       "owner_avatar_url": "https://avatars.githubusercontent.com/u/260392218?v=4",
       "updated_at": "2026-11-20T13:08:29Z",
-      "latest_release_tag": "v1.0.0.4-Edu",
-      "latest_release_name": "v1.0.0.4-Edu",
-      "release_notes": "<!-- SHA256: a41d65c6073ed0c2a29b565085458295e4ec6e224229d3be5b89330317303d4f -->\n\n- 修复更新程序右上角窗口按钮重合：改用系统原生窗口按钮，去掉重复的自绘按钮\n- 主页资讯改为镜像源：优先从 GitHub 加速镜像读取 news.json（一次请求拿全部仓库资讯），失败再回退 GitHub API\n- news.json 由 GitHub Actions 每天自动刷新\n- 更新下载继续使用国内镜像回退（ghfast.top / ghproxy.net）",
-      "released_at": "2026-11-22T04:34:24Z"
+      "latest_release_tag": "v1.0.0.5-Edu",
+      "latest_release_name": "v1.0.0.5-Edu",
+      "release_notes": "<!-- SHA256: 0c2d8aef7f254e62510ce10bf16850b33f8e35d3b9fe33e8d6ea4d482f2bd67a -->\n\n- 修复后台承载窗口（静默/守护模式）可能显示为黑色空窗口的问题：强制隐藏，并在被意外激活时立即再次隐藏，避免出现标题为「ShutdownTimer Background」的黑窗口\n- 静默模式/守护模式行为不变（后台计时、软件管控、Alt+L 退出、守护自动拉起均保留）",
+      "released_at": "2026-11-22T04:55:35Z"
     },
     {
       "full_name": "MEIMAOA/ShutdownTimer",
@@ -26,10 +26,10 @@
       "html_url": "https://github.com/MEIMAOA/ShutdownTimer",
       "owner_avatar_url": "https://avatars.githubusercontent.com/u/260392218?v=4",
       "updated_at": "2026-11-19T11:28:47Z",
-      "latest_release_tag": "v2.0.0.17",
-      "latest_release_name": "v2.0.0.17",
-      "release_notes": "<!-- SHA256: dd8e48c44e2e4e2b8cf84d900f02348e9a045e067e6b0223f6af47608ac0ce2f -->\n\n- 修复更新程序右上角窗口按钮重合：改用系统原生窗口按钮，去掉重复的自绘按钮\n- 主页资讯改为镜像源：优先从 GitHub 加速镜像读取 news.json（一次请求拿全部仓库资讯），失败再回退 GitHub API\n- news.json 由 GitHub Actions 每天自动刷新\n- 更新下载继续使用国内镜像回退（ghfast.top / ghproxy.net）",
-      "released_at": "2026-11-22T04:23:56Z"
+      "latest_release_tag": "v2.0.0.18",
+      "latest_release_name": "v2.0.0.18",
+      "release_notes": "<!-- SHA256: 88ecbbcc09cf6a5798a77526de0858085236bd07aefaa5a46084bef99d17e92a -->\n\n- 修复后台承载窗口（静默/守护模式）可能显示为黑色空窗口的问题：强制隐藏，并在被意外激活时立即再次隐藏，避免出现标题为「ShutdownTimer Background」的黑窗口\n- 静默模式/守护模式行为不变（后台计时、软件管控、Alt+L 退出均保留）",
+      "released_at": "2026-11-22T04:50:26Z"
     },
     {
       "full_name": "MEIMAOA/SysKit",
